@@ -11,7 +11,7 @@ namespace Minecraft
     {
         public static Matrix4 viewMatrix;
         public static Matrix4 projMatrix;
-        public static Vector3 eye = new Vector3(0f, 0f, 20f);
+        public static Vector3 position = new Vector3(0f, 0f, 20f);
         public static Vector3 center = new Vector3(0f, 0f, 0f);
         public static Vector3 up = new Vector3(0f, 1f, 0f);
         public static bool ortho = false;
@@ -26,7 +26,7 @@ namespace Minecraft
         {
             Vector3 move = new Vector3(0f, 0f, 1f) * speed;
             Matrix3 mat = Matrix3.CreateRotationY(((Rotation.Y + offset) * Util.PI) / 180f);
-            eye += move * mat;
+            position += move * mat;
         }
 
         public static void UpdateView(float width, float height)
@@ -35,9 +35,9 @@ namespace Minecraft
             float y = (Rotation.Y * Util.PI) / 180f;
             Vector3 offset = new Vector3(0f, 0f, 1f);
             Matrix3 mat = Matrix3.CreateRotationX(x) * Matrix3.CreateRotationY(y);
-            center = eye + (offset * mat);
+            center = position + (offset * mat);
             
-            viewMatrix = Matrix4.LookAt(eye, center, up);
+            viewMatrix = Matrix4.LookAt(position, center, up);
 
             if (ortho) {
                 float projWidth = width;

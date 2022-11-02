@@ -11,8 +11,9 @@ namespace Minecraft
     [StructLayout(LayoutKind.Sequential)]
     public struct Vertex
     {
-        public const int Size = 3 * sizeof(float);
+        public const int Size = 5 * sizeof(float);
 
         public Vector3 position;
+        public Vector2 uv;
     }
 }

@@ -7,16 +7,15 @@ using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using System.Drawing;
 using OpenTK.Input;
+using System.Runtime.InteropServices;
 
 namespace Minecraft
 {
     public class Window : GameWindow
     {
         Shader shader;
-        int vao;
-        int vbo;
-        int ebo;
-        Matrix4 transform;
+        Texture dirtTex;
+        Vector3[] cubes;
         KeyboardState keyboardState;
 
         public Window()
@@ -26,51 +25,27 @@ namespace Minecraft
             Title = "Minecraft";
         }
 
-        void Upload()
-        {
-            Vertex[] vertices = new Vertex[]
-            {
-                new Vertex(){ position = new Vector3(-0.5f, -0.5f, 0f)},
-                new Vertex(){ position = new Vector3(-0.5f, 0.5f, 0f)},
-                new Vertex(){ position = new Vector3(0.5f, 0.5f, 0f)},
-                new Vertex(){ position = new Vector3(0.5f, -0.5f, 0f)},
-            };
-
-            uint[] indices = new uint[]
-            {
-                0, 1, 3,
-                1, 2, 3
-            };
-
-            GL.CreateVertexArrays(1, out vao);
-            GL.BindVertexArray(vao);
-
-            GL.CreateBuffers(1, out ebo);
-            GL.NamedBufferData(ebo, indices.Length * sizeof(int), indices, BufferUsageHint.StaticDraw);
-            GL.VertexArrayElementBuffer(vao, ebo);
-
-            int vertexBindingPoint = 0;
-            GL.CreateBuffers(1, out vbo);
-            GL.NamedBufferData(vbo, vertices.Length * Vertex.Size, vertices, BufferUsageHint.StaticDraw);
-            GL.VertexArrayVertexBuffer(vao, vertexBindingPoint, vbo, IntPtr.Zero, Vertex.Size);
-
-            // pos
-            GL.VertexArrayAttribFormat(vao, 0, 3, VertexAttribType.Float, false, 0);
-            GL.VertexArrayAttribBinding(vao, 0, vertexBindingPoint);
-            GL.EnableVertexArrayAttrib(vao, 0);
-            // color
-            /*GL.VertexArrayAttribFormat(vao, 1, 4, VertexAttribType.Float, false, 3 * sizeof(float));
-            GL.VertexArrayAttribBinding(vao, 1, vertexBindingPoint);
-            GL.EnableVertexArrayAttrib(vao, 1);*/
-        }
-
         protected override void OnLoad(EventArgs e)
         {
             GL.Enable(EnableCap.DebugOutput);
             GL.DebugMessageCallback(MessageCallback, IntPtr.Zero);
 
+            GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.CullFace);
+
             shader = new Shader();
             shader.Compile("shader");
+
+            dirtTex = new Texture(Environment.CurrentDirectory + "/Data/textures/dirt.png");
+
+            cubes = new Vector3[100];
+            int i = 0;
+            for (int x = -5; x < 5; x++) {
+                for (int z = -5; z < 5; z++) {
+                    cubes[i] = new Vector3(x, 0, z);
+                    i++;
+                }
+            }
 
             base.WindowBorder = WindowBorder.Fixed;
             base.WindowState = WindowState.Normal;
@@ -78,16 +53,16 @@ namespace Minecraft
             shader.Bind();
             Camera.SetRotation(new Vector3(0f, 180f, 0f));
             Camera.UpdateView(Width, Height);
-            transform = Matrix4.CreateTranslation(new Vector3(0f, 0f, 0f));
-            GL.UniformMatrix4(0, false, ref transform);
-            GL.UniformMatrix4(1, false, ref Camera.projMatrix);
-            GL.UniformMatrix4(2, false, ref Camera.viewMatrix);
-            Upload();
+            shader.UploadMat4("uProjection", ref Camera.projMatrix);
+            shader.UploadMat4("uView", ref Camera.viewMatrix);
         }
 
         private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
-            Console.WriteLine($"MessageCallback: Source:{source}, Type:{type}, id:{id}, Severity:{severity}, Message: {message}");
+            byte[] managedArray = new byte[length];
+            Marshal.Copy(message, managedArray, 0, length);
+            Console.WriteLine($"MessageCallback: Source:{source}, Type:{type}, id:{id}, " +
+                $"Severity:{severity}, Message: {Encoding.ASCII.GetString(managedArray)}");
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -102,10 +77,10 @@ namespace Minecraft
             else if (keyboardState.IsKeyDown(Key.Down))
                 Camera.Rotation.X += delta * 80f;
 
-            if (Camera.Rotation.X < -90)
-                Camera.Rotation.X = -90;
-            else if (Camera.Rotation.X > 90)
-                Camera.Rotation.X = 90;
+            if (Camera.Rotation.X < -85)
+                Camera.Rotation.X = -85;
+            else if (Camera.Rotation.X > 85)
+                Camera.Rotation.X = 85;
 
             if (keyboardState.IsKeyDown(Key.W))
                 Camera.Move(0f, delta * 8f);
@@ -115,6 +90,10 @@ namespace Minecraft
                 Camera.Move(90f, delta * 8f);
             else if (keyboardState.IsKeyDown(Key.D))
                 Camera.Move(270f, delta * 8f);
+            if (keyboardState.IsKeyDown(Key.Space))
+                Camera.position.Y += delta * 6f;
+            else if (keyboardState.IsKeyDown(Key.ShiftLeft))
+                Camera.position.Y -= delta * 6f;
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -124,11 +103,11 @@ namespace Minecraft
 
             shader.Bind();
             Camera.UpdateView(Width, Height);
-            GL.UniformMatrix4(0, false, ref transform);
-            GL.UniformMatrix4(1, false, ref Camera.projMatrix);
-            GL.UniformMatrix4(2, false, ref Camera.viewMatrix);
-            GL.BindVertexArray(vao);
-            GL.DrawElements(BeginMode.Triangles, 6, DrawElementsType.UnsignedInt, 0);
+            shader.UploadMat4("uProjection", ref Camera.projMatrix);
+            shader.UploadMat4("uView", ref Camera.viewMatrix);
+            for (int i = 0; i < cubes.Length; i++) {
+                Cube.drawCube(cubes[i], dirtTex, shader);
+            }
 
             SwapBuffers();
         }
