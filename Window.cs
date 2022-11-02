@@ -18,6 +18,11 @@ namespace Minecraft
         Vector3[] cubes;
         KeyboardState keyboardState;
 
+        // Mouse
+        bool lockMouse;
+        Point lastMousePos;
+        Point origCursorPosition; // position before lock
+
         public Window()
         {
             Width = 1280;
@@ -55,6 +60,8 @@ namespace Minecraft
             Camera.UpdateView(Width, Height);
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
+
+            LockMouse();
         }
 
         private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
@@ -68,6 +75,8 @@ namespace Minecraft
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             float delta = (float)e.Time;
+
+            // Rotation
             if (keyboardState.IsKeyDown(Key.Left))
                 Camera.Rotation.Y += delta * 160f;
             else if (keyboardState.IsKeyDown(Key.Right))
@@ -77,11 +86,21 @@ namespace Minecraft
             else if (keyboardState.IsKeyDown(Key.Down))
                 Camera.Rotation.X += delta * 80f;
 
+            if (lockMouse) {
+                var mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
+                if (mouseDelta != Point.Empty) {
+                    Camera.Rotation.X += mouseDelta.Y * 0.25f;
+                    Camera.Rotation.Y += -mouseDelta.X * 0.25f;
+                    CenterCursor();
+                }
+            }
+
             if (Camera.Rotation.X < -85)
                 Camera.Rotation.X = -85;
             else if (Camera.Rotation.X > 85)
                 Camera.Rotation.X = 85;
 
+            // Movement
             if (keyboardState.IsKeyDown(Key.W))
                 Camera.Move(0f, delta * 8f);
             else if (keyboardState.IsKeyDown(Key.S))
@@ -94,6 +113,11 @@ namespace Minecraft
                 Camera.position.Y += delta * 6f;
             else if (keyboardState.IsKeyDown(Key.ShiftLeft))
                 Camera.position.Y -= delta * 6f;
+
+            Console.Title = Camera.Rotation.ToString();
+
+            if (keyboardState.IsKeyDown(Key.Escape))
+                UnlockMouse();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -119,6 +143,32 @@ namespace Minecraft
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            LockMouse();
+        }
+
+        // Mouse
+        private void CenterCursor()
+        {
+            System.Windows.Forms.Cursor.Position = new Point(Width / 2 + Location.X, Height / 2 + Location.Y);
+            lastMousePos = System.Windows.Forms.Cursor.Position;
+        }
+        protected void LockMouse()
+        {
+            lockMouse = true;
+            origCursorPosition = System.Windows.Forms.Cursor.Position;
+            CursorVisible = false;
+            CenterCursor();
+        }
+
+        protected void UnlockMouse()
+        {
+            lockMouse = false;
+            CursorVisible = true;
+            System.Windows.Forms.Cursor.Position = origCursorPosition;
         }
     }
 }

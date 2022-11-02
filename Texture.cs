@@ -19,7 +19,6 @@ namespace Minecraft
 
         public Texture(string path)
         {
-            //Bitmap db = (Bitmap)Image.FromFile(path);
             DirectBitmap db = DirectBitmap.Load(path, false);
 
             Width = db.Width;

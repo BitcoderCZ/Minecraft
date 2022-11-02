@@ -17,6 +17,12 @@ namespace Minecraft
         public static bool ortho = false;
         public static Vector3 Rotation;
 
+        private static float mod(float x, float m)
+        {
+            float r = x % m;
+            return r < 0 ? r + m : r;
+        }
+
         public static void SetRotation(Vector3 rot)
         {
             Rotation = rot;
@@ -31,6 +37,7 @@ namespace Minecraft
 
         public static void UpdateView(float width, float height)
         {
+            Rotation.Y = mod(Rotation.Y, 360);
             float x = (Rotation.X * Util.PI) / 180f;
             float y = (Rotation.Y * Util.PI) / 180f;
             Vector3 offset = new Vector3(0f, 0f, 1f);
