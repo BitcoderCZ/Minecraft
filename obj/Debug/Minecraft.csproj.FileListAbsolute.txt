@@ -1,0 +1,11 @@
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\Minecraft.exe.config
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\Minecraft.exe
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\Minecraft.pdb
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\OpenTK.dll
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\OpenTK.pdb
+E:\Program Files\VisualStudioProjects\Minecraft\bin\Debug\OpenTK.xml
+E:\Program Files\VisualStudioProjects\Minecraft\obj\Debug\Minecraft.csproj.AssemblyReference.cache
+E:\Program Files\VisualStudioProjects\Minecraft\obj\Debug\Minecraft.csproj.CoreCompileInputs.cache
+E:\Program Files\VisualStudioProjects\Minecraft\obj\Debug\Minecraft.csproj.CopyComplete
+E:\Program Files\VisualStudioProjects\Minecraft\obj\Debug\Minecraft.exe
+E:\Program Files\VisualStudioProjects\Minecraft\obj\Debug\Minecraft.pdb
