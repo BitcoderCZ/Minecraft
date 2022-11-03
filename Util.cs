@@ -8,6 +8,6 @@ namespace Minecraft
 {
     public static class Util
     {
-        public const float PI = (float)Math.PI;
+        public const float PI = (float)System.Math.PI;
     }
 }

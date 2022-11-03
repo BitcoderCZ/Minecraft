@@ -11,7 +11,7 @@ namespace Minecraft
     {
         public static Matrix4 viewMatrix;
         public static Matrix4 projMatrix;
-        public static Vector3 position = new Vector3(0f, 0f, 20f);
+        public static Vector3 position = new Vector3(5f, VoxelData.ChunkHeight + 5f, 5f);
         public static Vector3 center = new Vector3(0f, 0f, 0f);
         public static Vector3 up = new Vector3(0f, 1f, 0f);
         public static bool ortho = false;
@@ -68,9 +68,12 @@ namespace Minecraft
             }
         }
 
+        const float PI = (float)System.Math.PI;
+        const float PIDiv = PI / 180f;
+
         static float DegToRad(float degrees)
         {
-            float radians = ((float)Math.PI / 180f) * degrees;
+            float radians = PIDiv * degrees;
             return (radians);
         }
     }

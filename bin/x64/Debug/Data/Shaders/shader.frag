@@ -2,11 +2,11 @@
 
 out vec4 FragColor;
 
-layout (location = 0) in vec2 fUv;
+in vec3 fUv;
 
-uniform sampler2D uTexture;
+layout (location = 5, binding = 1) uniform sampler2DArray textures;
 
 void main()
 {
-    FragColor = /*vec4(fUv.x, fUv.y, 0.0, 0.0);*/texture(uTexture, fUv);
+    FragColor = texture(textures, fUv, 0);
 }

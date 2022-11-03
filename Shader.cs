@@ -81,7 +81,8 @@ namespace Minecraft
 
         public void UploadInt(string name, int val)
         {
-            GL.Uniform1(GetVarLocation(this, name), val);
+            int loc = GetVarLocation(this, name);
+            GL.Uniform1(loc, val);
         }
 
         public void UploadMat4(string name, ref Matrix4 val)

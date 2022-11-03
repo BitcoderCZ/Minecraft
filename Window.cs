@@ -9,17 +9,17 @@ using System.Drawing;
 using OpenTK.Input;
 using System.Runtime.InteropServices;
 
+using Minecraft.Math;
+
 namespace Minecraft
 {
     public class Window : GameWindow
     {
         Shader shader;
-        Texture dirtTex;
-        Vector3[] cubes;
         KeyboardState keyboardState;
 
         // Mouse
-        bool lockMouse;
+        bool mouseLocked;
         Point lastMousePos;
         Point origCursorPosition; // position before lock
 
@@ -41,16 +41,9 @@ namespace Minecraft
             shader = new Shader();
             shader.Compile("shader");
 
-            dirtTex = new Texture(Environment.CurrentDirectory + "/Data/textures/dirt.png");
+            Texture.CreateTA();
 
-            cubes = new Vector3[100];
-            int i = 0;
-            for (int x = -5; x < 5; x++) {
-                for (int z = -5; z < 5; z++) {
-                    cubes[i] = new Vector3(x, 0, z);
-                    i++;
-                }
-            }
+            World.Generate();
 
             base.WindowBorder = WindowBorder.Fixed;
             base.WindowState = WindowState.Normal;
@@ -66,6 +59,8 @@ namespace Minecraft
 
         private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
+            if (id == 131185)
+                return;
             byte[] managedArray = new byte[length];
             Marshal.Copy(message, managedArray, 0, length);
             Console.WriteLine($"MessageCallback: Source:{source}, Type:{type}, id:{id}, " +
@@ -86,7 +81,7 @@ namespace Minecraft
             else if (keyboardState.IsKeyDown(Key.Down))
                 Camera.Rotation.X += delta * 80f;
 
-            if (lockMouse) {
+            if (mouseLocked) {
                 var mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
                 if (mouseDelta != Point.Empty) {
                     Camera.Rotation.X += mouseDelta.Y * 0.25f;
@@ -116,8 +111,12 @@ namespace Minecraft
 
             Console.Title = Camera.Rotation.ToString();
 
+            // Other keyboard
             if (keyboardState.IsKeyDown(Key.Escape))
                 UnlockMouse();
+
+            float FPS = 1f / delta;
+            Title = $"Minecraft FPS: {SystemPlus.MathPlus.Round(FPS, 2)}";
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -129,17 +128,15 @@ namespace Minecraft
             Camera.UpdateView(Width, Height);
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
-            for (int i = 0; i < cubes.Length; i++) {
-                Cube.drawCube(cubes[i], dirtTex, shader);
-            }
-
+            World.Render(shader);
+            
             SwapBuffers();
         }
+
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
         }
-
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
@@ -158,7 +155,7 @@ namespace Minecraft
         }
         protected void LockMouse()
         {
-            lockMouse = true;
+            mouseLocked = true;
             origCursorPosition = System.Windows.Forms.Cursor.Position;
             CursorVisible = false;
             CenterCursor();
@@ -166,7 +163,7 @@ namespace Minecraft
 
         protected void UnlockMouse()
         {
-            lockMouse = false;
+            mouseLocked = false;
             CursorVisible = true;
             System.Windows.Forms.Cursor.Position = origCursorPosition;
         }
