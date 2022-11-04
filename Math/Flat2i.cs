@@ -21,6 +21,11 @@ namespace Minecraft.Math
             Z = _Z;
         }
 
+        public static Flat2i FromBlock(Vector3 pos)
+            => new Flat2i((int)pos.X / VoxelData.ChunkWidth, (int)pos.Z / VoxelData.ChunkWidth);
+        public static Flat2i FromBlock(Vector3i pos)
+            => new Flat2i(pos.X / VoxelData.ChunkWidth, pos.Z / VoxelData.ChunkWidth);
+
         public static Flat2i operator +(Flat2i a, Flat2i b)
             => new Flat2i(a.X + b.X, a.Z + b.Z);
         public static Flat2i operator -(Flat2i a, Flat2i b)

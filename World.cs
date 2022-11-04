@@ -1,6 +1,7 @@
 ﻿using Minecraft.Math;
 using OpenTK;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,9 +43,16 @@ namespace Minecraft
         private static List<Flat2i> activeChunks = new List<Flat2i>();
         private static Flat2i prevPlayerChunk;
 
+        private static List<Flat2i> chunksToCreate = new List<Flat2i>();
+        private static bool isCreatingChunks;
+
+        private static TaskFactory factory;
+
         static World()
         {
-            seed = 2147483647;
+            factory = new TaskFactory();
+            Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
+            seed = (uint)r.Next();
             Noise.SetSeed(seed);
             spawnPos = new Vector3(VoxelData.WorldSizeInBlocks / 2f, VoxelData.ChunkHeight + 2f, VoxelData.WorldSizeInBlocks / 2f);
         }
@@ -54,7 +62,10 @@ namespace Minecraft
             if (BlockToChunk(Player.Position) != prevPlayerChunk)
                 CheckViewDistance();
 
-            prevPlayerChunk = BlockToChunk(Player.Position);
+            if (chunksToCreate.Count > 0 && !isCreatingChunks)
+                 factory.StartNew(CreateChunks);//Task.Factory.StartNew(CreateChunks);
+
+            Console.Title = $"Chunks to create: {chunksToCreate.Count}, creating: {isCreatingChunks}";
         }
 
         public static void Generate()
@@ -63,8 +74,12 @@ namespace Minecraft
 
             for (int x = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; x < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; x++)
                 for (int z = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; z < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; z++) {
-                    if (IsChunkInWorld(x, z))
-                        CreateNewChunk(x, z);
+                    if (IsChunkInWorld(x, z)) {
+                        Flat2i pos = new Flat2i(x, z);
+                        chunks[x, z] = new Chunk(pos, false);
+                        chunksToCreate.Add(pos);
+                        activeChunks.Add(pos);
+                    }
                 }
 
             Player.Position = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
@@ -73,6 +88,19 @@ namespace Minecraft
             prevPlayerChunk = BlockToChunk(Player.Position);
 
             Console.WriteLine("WORLD:GENERATE:DONE");
+        }
+
+        private static async Task<object> CreateChunks()
+        {
+            isCreatingChunks = true;
+
+            while (chunksToCreate.Count > 0) {
+                chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
+                chunksToCreate.RemoveAt(0);
+            }
+
+            isCreatingChunks = false;
+            return null;
         }
 
         private static Flat2i BlockToChunk(Vector3i v)
@@ -84,6 +112,8 @@ namespace Minecraft
         {
             Flat2i playerChunk = BlockToChunk(Player.Position);
 
+            prevPlayerChunk = BlockToChunk(Player.Position);
+
             List<Flat2i> prevActiveChunks = new List<Flat2i>(activeChunks);
 
             for (int x = playerChunk.X - VoxelData.RenderDistance; x < playerChunk.X + VoxelData.RenderDistance; x++)
@@ -93,10 +123,13 @@ namespace Minecraft
 
                     Flat2i chp = new Flat2i(x, z);
 
-                    if (chunks[x, z] == null)
-                        CreateNewChunk(x, z);
-                    else if (!chunks[x, z].active) {
-                        chunks[x, z].active = true;
+                    if (chunks[x, z] == null) {
+                        chunks[x, z] = new Chunk(chp, false);
+                        chunksToCreate.Add(new Flat2i(x, z));
+                        activeChunks.Add(chp);
+                    }
+                    else if (!chunks[x, z].Active) {
+                        chunks[x, z].Active = true;
                         activeChunks.Add(chp);
                     }
 
@@ -110,24 +143,25 @@ namespace Minecraft
 
             for (int i = 0; i < prevActiveChunks.Count; i++) {
                 activeChunks.Remove(prevActiveChunks[i]);
-                chunks[prevActiveChunks[i].X, prevActiveChunks[i].Z].active = false;
+                chunks[prevActiveChunks[i].X, prevActiveChunks[i].Z].Active = false;
             }
         }
 
-        public static bool CheckForBlock(float _x, float _y, float _z)
+        public static bool CheckForBlock(Vector3 pos)
         {
-            int x = (int)_x;
-            int y = (int)_y;
-            int z = (int)_z;
+            Flat2i chunk = Flat2i.FromBlock(pos);
+            Vector3i iPos = (Vector3i)pos;
 
-            int xChunk = x / VoxelData.ChunkWidth;
-            int zChunk = z / VoxelData.ChunkWidth;
+            if (!IsBlockInWorld(iPos) || iPos.Y < 0 || iPos.Y > VoxelData.ChunkHeight)
+                return false;
 
-            x -= (xChunk * VoxelData.ChunkWidth);
-            z -= (zChunk * VoxelData.ChunkWidth);
+            if (chunks[chunk.X, chunk.Z] != null && chunks[chunk.X, chunk.Z].BlocksGenerated)
+                return blocktypes[chunks[chunk.X, chunk.Z].GetBlockGlobalPos(iPos)].isSolid;
 
-            return blocktypes[chunks[xChunk, zChunk].GetBlock(x, y, z)].isSolid;
+            return blocktypes[GetGenBlock(iPos)].isSolid;
         }
+        public static bool CheckForBlock(float x, float y, float z)
+            => CheckForBlock(new Vector3(x, y, z));
 
         public static uint GetGenBlock(int x, int y, int z)
         {
@@ -168,14 +202,6 @@ namespace Minecraft
         }
         public static uint GetGenBlock(Vector3i pos)
             => GetGenBlock(pos.X, pos.Y, pos.Z);
-
-        private static void CreateNewChunk(int x, int z)
-        {
-            Chunk chunk = new Chunk(new Flat2i(x, z));
-            chunks[x, z] = chunk;
-            activeChunks.Add(new Flat2i(x, z));
-            chunk.active = true;
-        }
 
         private static bool IsChunkInWorld(int x, int z)
         {

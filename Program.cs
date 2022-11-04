@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenTK;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,12 +7,14 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    class Program
+    static class Program
     {
+        public static GameWindow Window;
+
         static void Main(string[] args)
         {
-            Window window = new Window();
-            window.Run(60d);
+            Window = new Window();
+            Window.Run(60d);
         }
     }
 }

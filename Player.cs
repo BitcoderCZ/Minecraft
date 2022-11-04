@@ -60,7 +60,6 @@ namespace Minecraft
             jumpRequest = false;
 
             Position += velocity;
-            Console.Title = isGrounded.ToString() + "  " + velocity.ToString();
             /*if (keyboardState.IsKeyDown(Key.W)) // flying
                 Move(0f, delta * mult);
             else if (keyboardState.IsKeyDown(Key.S))

@@ -2,9 +2,11 @@
 
 out vec4 FragColor;
 
-layout (location = 0) in vec3 fragCoord;
+in vec3 fUv;
+
+layout (location = 5, binding = 1) uniform sampler2DArray textures;
 
 void main()
 {
-    FragColor = vec4(fragCoord, 1.0);
+    FragColor = texture(textures, fUv, 0);
 }

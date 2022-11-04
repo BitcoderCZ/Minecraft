@@ -1,6 +1,7 @@
 ﻿using Minecraft.Math;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Platform.Windows;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,38 +15,64 @@ namespace Minecraft
         uint vertexIndex = 0;
         List<Vertex> vertices = new List<Vertex>();
         List<uint> triangles = new List<uint>();
+        Vertex[] vertsA;
+        uint[] trigsA;
 
         public readonly uint[] blocks;
 
         public Flat2i chunkPos;
         public Flat2i pos;
-        public bool active;
+        public bool Active
+        {
+            get => active;
+            set {
+                /*if (value == false && active == true) {
+                    GL.DeleteBuffer(ebo);
+                    GL.DeleteBuffer(vbo);
+                } else if (value = true && active = false)*/
+                active = value;
+            }
+        }
+        private bool active;
+        public bool BlocksGenerated;
+        private bool CreatedMesh;
 
         private int vao;
         private int vbo;
         private int ebo;
 
-        public Chunk(Flat2i _position, uint[] _blocks)
+        public Chunk(Flat2i _position, bool generate)
         {
             active = false;
+            BlocksGenerated = false;
+            CreatedMesh = false;
             chunkPos = _position;
             pos = new Flat2i(chunkPos.X * VoxelData.ChunkWidth, chunkPos.Z * VoxelData.ChunkWidth);
-            blocks = _blocks;
-            PopulateBlocks();
-            CreateMeshData();
-            InitMesh();
+            blocks = new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight];
+
+            if (generate)
+                Init();
         }
 
-        public Chunk(Flat2i _position) : this(_position, new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight])
-        { }
+        public void Init()
+        {
+            GenerateBlocks();
+            CreateMeshData();
+            vertsA = vertices.ToArray();
+            trigsA = triangles.ToArray();
+            //InitMesh();
+            active = true;
+        }
 
-        private void PopulateBlocks()
+        private void GenerateBlocks()
         {
             for (int x = 0; x < VoxelData.ChunkWidth; x++)
                 for (int z = 0; z < VoxelData.ChunkWidth; z++)
                     for (int y = 0; y < VoxelData.ChunkHeight; y++) {
                         SetBlock(x, y, z, World.GetGenBlock(new Vector3i(x, y, z) + pos));
                     }
+
+            BlocksGenerated = true;
         }
 
         public void CreateMeshData()
@@ -85,20 +112,22 @@ namespace Minecraft
 
         void InitMesh()
         {
+            Program.Window.MakeCurrent();
             GL.CreateVertexArrays(1, out vao);
             GL.BindVertexArray(vao);
             GL.CreateBuffers(1, out ebo);
             GL.CreateBuffers(1, out vbo);
             CreateMesh();
+            CreatedMesh = true;
         }
 
         public void CreateMesh()
         {
-            GL.NamedBufferData(ebo, triangles.Count * sizeof(uint), triangles.ToArray(), BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(ebo, triangles.Count * sizeof(uint), trigsA, BufferUsageHint.DynamicDraw);
             GL.VertexArrayElementBuffer(vao, ebo);
 
             int vertexBindingPoint = 0;
-            GL.NamedBufferData(vbo, vertices.Count * Vertex.Size, vertices.ToArray(), BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(vbo, vertices.Count * Vertex.Size, vertsA, BufferUsageHint.DynamicDraw);
             GL.VertexArrayVertexBuffer(vao, vertexBindingPoint, vbo, IntPtr.Zero, Vertex.Size);
 
             // pos
@@ -113,8 +142,11 @@ namespace Minecraft
 
         public void Render(Shader s)
         {
-            if (!active)
+            if (!Active)
                 return;
+
+            if (!CreatedMesh)
+                InitMesh();
 
             Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X, 0f, pos.Z));
             s.UploadMat4("uTransform", ref transform);
@@ -148,7 +180,7 @@ namespace Minecraft
         public bool CheckBlock(int X, int Y, int Z)
         {
             if (!IsBlockInChunk(X, Y, Z))
-                return World.blocktypes[World.GetGenBlock(X + pos.X, Y, Z + pos.Z)].isSolid;
+                return World.CheckForBlock(X + pos.X, Y, Z + pos.Z);//World.blocktypes[World.GetGenBlock(X + pos.X, Y, Z + pos.Z)].isSolid;
 
             return World.blocktypes[blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)]].isSolid;
         }
@@ -164,5 +196,13 @@ namespace Minecraft
         }
         public bool IsBlockInChunk(Vector3i pos)
            => IsBlockInChunk(pos.X, pos.Y, pos.Z);
+
+        public uint GetBlockGlobalPos(Vector3i _pos)
+        {
+            _pos.X -= pos.X;
+            _pos.Z -= pos.Z;
+
+            return GetBlock(_pos);
+        }
     }
 }
