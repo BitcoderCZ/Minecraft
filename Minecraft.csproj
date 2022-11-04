@@ -69,9 +69,15 @@
     <Reference Include="SystemPlus+">
       <HintPath>..\SystemPlus\bin\Release\net48\SystemPlus+.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Mathematics">
+      <HintPath>..\Unity.Mathematics-1.2.5\build\bin\Release\Unity.Mathematics.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BiomeAttribs.cs" />
+    <Compile Include="BlockType.cs" />
+    <Compile Include="Math\Noise.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Chunk.cs" />
     <Compile Include="Math\Flat2i.cs" />

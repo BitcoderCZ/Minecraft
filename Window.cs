@@ -100,14 +100,15 @@ namespace Minecraft
                 Player.Rotation.X = 85;
 
             // Movement
+            float mult = keyboardState.IsKeyDown(Key.LControl) ? 16f : 8f;
             if (keyboardState.IsKeyDown(Key.W))
-                Player.Move(0f, delta * 8f);
+                Player.Move(0f, delta * mult);
             else if (keyboardState.IsKeyDown(Key.S))
-                Player.Move(180f, delta * 8f);
+                Player.Move(180f, delta * mult);
             if(keyboardState.IsKeyDown(Key.A))
-                Player.Move(90f, delta * 8f);
+                Player.Move(90f, delta * mult);
             else if (keyboardState.IsKeyDown(Key.D))
-                Player.Move(270f, delta * 8f);
+                Player.Move(270f, delta * mult);
             if (keyboardState.IsKeyDown(Key.Space))
                 Player.position.Y += delta * 6f;
             else if (keyboardState.IsKeyDown(Key.ShiftLeft))

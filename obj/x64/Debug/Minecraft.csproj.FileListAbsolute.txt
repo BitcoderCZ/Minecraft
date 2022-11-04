@@ -19,3 +19,5 @@ E:\Program Files\VisualStudioProjects\Minecraft\obj\x64\Debug\Minecraft.csproj.C
 E:\Program Files\VisualStudioProjects\Minecraft\obj\x64\Debug\Minecraft.csproj.CopyComplete
 E:\Program Files\VisualStudioProjects\Minecraft\obj\x64\Debug\Minecraft.exe
 E:\Program Files\VisualStudioProjects\Minecraft\obj\x64\Debug\Minecraft.pdb
+E:\Program Files\VisualStudioProjects\Minecraft\bin\x64\Debug\Unity.Mathematics.dll
+E:\Program Files\VisualStudioProjects\Minecraft\bin\x64\Debug\Unity.Mathematics.pdb
