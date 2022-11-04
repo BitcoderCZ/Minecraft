@@ -30,10 +30,13 @@ namespace Minecraft
             Title = "Minecraft";
         }
 
+        public DebugProc debMessageCallback;
+
         protected override void OnLoad(EventArgs e)
         {
             GL.Enable(EnableCap.DebugOutput);
-            //GL.DebugMessageCallback(MessageCallback, IntPtr.Zero);
+            debMessageCallback = new DebugProc(MessageCallback); // Fixed error: A callback was made on a garbage collected delegate
+            GL.DebugMessageCallback(debMessageCallback, IntPtr.Zero); 
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);

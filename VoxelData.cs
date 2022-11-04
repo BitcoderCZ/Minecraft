@@ -13,7 +13,7 @@ namespace Minecraft
         public const int ChunkWidth = 16;
         public const int ChunkHeight = 64;
         public const int ChunkLayerLength = ChunkWidth * ChunkWidth;
-		public const int WorldSizeInChunks = 20;
+		public const int WorldSizeInChunks = 50;
 
 		public const int WorldSizeInBlocks = ChunkWidth * WorldSizeInChunks;
 
