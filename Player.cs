@@ -15,7 +15,7 @@ namespace Minecraft
         public const float gravity = -9.8f * 1.5f;
         public const float jumpForce = 6f;
 
-        public const float maxFallSpeed = -15f;
+        public const float maxFallSpeed = -25f;
 
         public const float playerWidth = 0.25f;
         public const float playerHeight = 1.85f;
@@ -133,7 +133,7 @@ namespace Minecraft
                 World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) ||
                 World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth)) {
                 isGrounded = true;
-                verticalMomentum = -0.0001f;
+                verticalMomentum = verticalMomentum / 2f;
                 return 0;
             } else {
                 isGrounded = false;

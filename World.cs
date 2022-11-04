@@ -31,7 +31,7 @@ namespace Minecraft
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f,new Lode("cave", 0, true, 5, 90, 0.08f, 0.42f, -100f),  new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
+            new BiomeAttribs("plains", 60, 14, 0.2f,new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f),  new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
                                 new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
         };
         public static uint seed;
@@ -51,8 +51,8 @@ namespace Minecraft
 
         public static void Update()
         {
-            //if (BlockToChunk(Player.position) != prevPlayerChunk)
-            //    CheckViewDistance();
+            if (BlockToChunk(Player.Position) != prevPlayerChunk)
+                CheckViewDistance();
 
             prevPlayerChunk = BlockToChunk(Player.Position);
         }
