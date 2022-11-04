@@ -14,12 +14,19 @@ namespace Minecraft
         public int terrainHeight;
         public float terrainScale;
 
-        public BiomeAttribs(string _name, int _minH, int _terrainHeight, float _terrainScale)
+        public Lode[] lodes;
+
+        public BiomeAttribs(string _name, int _minH, int _terrainHeight, float _terrainScale, params Lode[] _lodes)
         {
             name = _name;
             minHeight = _minH;
             terrainHeight = _terrainHeight;
             terrainScale = _terrainScale;
+
+            if (_lodes == null)
+                lodes = new Lode[0];
+            else
+                lodes = _lodes;
         }
     }
 }

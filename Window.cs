@@ -53,9 +53,9 @@ namespace Minecraft
             GL.Viewport(0, 0, Width, Height);
             shader.Bind();
             Player.SetRotation(new Vector3(0f, 180f, 0f));
-            Player.UpdateView(Width, Height);
-            shader.UploadMat4("uProjection", ref Player.projMatrix);
-            shader.UploadMat4("uView", ref Player.viewMatrix);
+            Camera.UpdateView(Width, Height);
+            shader.UploadMat4("uProjection", ref Camera.projMatrix);
+            shader.UploadMat4("uView", ref Camera.viewMatrix);
 
             LockMouse();
         }
@@ -86,7 +86,7 @@ namespace Minecraft
                 Player.Rotation.X += delta * 80f;
 
             if (mouseLocked) {
-                var mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
+                Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
                 if (mouseDelta != Point.Empty) {
                     Player.Rotation.X += mouseDelta.Y * 0.25f;
                     Player.Rotation.Y += -mouseDelta.X * 0.25f;
@@ -99,22 +99,7 @@ namespace Minecraft
             else if (Player.Rotation.X > 85)
                 Player.Rotation.X = 85;
 
-            // Movement
-            float mult = keyboardState.IsKeyDown(Key.LControl) ? 16f : 8f;
-            if (keyboardState.IsKeyDown(Key.W))
-                Player.Move(0f, delta * mult);
-            else if (keyboardState.IsKeyDown(Key.S))
-                Player.Move(180f, delta * mult);
-            if(keyboardState.IsKeyDown(Key.A))
-                Player.Move(90f, delta * mult);
-            else if (keyboardState.IsKeyDown(Key.D))
-                Player.Move(270f, delta * mult);
-            if (keyboardState.IsKeyDown(Key.Space))
-                Player.position.Y += delta * 6f;
-            else if (keyboardState.IsKeyDown(Key.ShiftLeft))
-                Player.position.Y -= delta * 6f;
-
-            Console.Title = Player.Rotation.ToString();
+            Player.Update(keyboardState, delta);
 
             // Other keyboard
             if (keyboardState.IsKeyDown(Key.Escape))
@@ -138,9 +123,9 @@ namespace Minecraft
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             shader.Bind();
-            Player.UpdateView(Width, Height);
-            shader.UploadMat4("uProjection", ref Player.projMatrix);
-            shader.UploadMat4("uView", ref Player.viewMatrix);
+            Camera.UpdateView(Width, Height);
+            shader.UploadMat4("uProjection", ref Camera.projMatrix);
+            shader.UploadMat4("uView", ref Camera.viewMatrix);
             World.Render(shader);
             
             SwapBuffers();

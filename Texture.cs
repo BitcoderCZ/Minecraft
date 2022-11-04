@@ -36,11 +36,13 @@ namespace Minecraft
             new TextureInfo("oak_planks"), // 6
             new TextureInfo("oak_sapling"), // 7
             new TextureInfo("bedrock"), // 8
-            /*new TextureInfo("water_flow"), // 9
-            new TextureInfo("water_still"), // 10
-            new TextureInfo("lava_flow"), // 11
-            new TextureInfo("lava_still"),*/ // 12
-            new TextureInfo("sand"), // 13
+            new TextureInfo("sand"), // 9
+            new TextureInfo("granite"), // 10
+            new TextureInfo("polished_granite"), // 11
+            new TextureInfo("diorite"), // 12
+            new TextureInfo("polished_diorite"), // 13
+            new TextureInfo("andesite"), // 14
+            new TextureInfo("polished_andesite"), // 15
         };
 
         public static void CreateTA()

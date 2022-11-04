@@ -27,13 +27,13 @@ namespace Minecraft
 
         public Chunk(Flat2i _position, uint[] _blocks)
         {
+            active = false;
             chunkPos = _position;
             pos = new Flat2i(chunkPos.X * VoxelData.ChunkWidth, chunkPos.Z * VoxelData.ChunkWidth);
             blocks = _blocks;
             PopulateBlocks();
             CreateMeshData();
             InitMesh();
-            active = true;
         }
 
         public Chunk(Flat2i _position) : this(_position, new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight])

@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using OpenTK.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,18 +10,27 @@ namespace Minecraft
 {
     public static class Player
     {
-        public static Matrix4 viewMatrix;
-        public static Matrix4 projMatrix;
-        public static Vector3 position = Vector3.Zero;
-        private static Vector3 center = Vector3.Zero;
-        private static readonly Vector3 up = Vector3.UnitY;
-        public static bool ortho = false;
-        public static Vector3 Rotation;
+        public const float walfSpeed = 4f;
+        public const float sprintSpeed = 6f;
+        public const float gravity = -9.8f * 1.5f;
+        public const float jumpForce = 6f;
 
-        private static float mod(float x, float m)
+        public const float maxFallSpeed = -15f;
+
+        public const float playerWidth = 0.25f;
+        public const float playerHeight = 1.85f;
+
+        public static bool isGrounded;
+
+        public static Vector3 Position = Vector3.Zero;
+        public static Vector3 Rotation;
+        private static Vector3 velocity;
+        public static float verticalMomentum;
+        public static bool jumpRequest;
+
+        static Player()
         {
-            float r = x % m;
-            return r < 0 ? r + m : r;
+            velocity = Vector3.Zero;
         }
 
         public static void SetRotation(Vector3 rot)
@@ -32,49 +42,156 @@ namespace Minecraft
         {
             Vector3 move = new Vector3(0f, 0f, 1f) * speed;
             Matrix3 mat = Matrix3.CreateRotationY(((Rotation.Y + offset) * Util.PI) / 180f);
-            position += move * mat;
+            Position += move * mat;
         }
 
-        public static void UpdateView(float width, float height)
+        public static void Update(KeyboardState keyboardState, float delta)
         {
-            Rotation.Y = mod(Rotation.Y, 360);
-            float x = (Rotation.X * Util.PI) / 180f;
-            float y = (Rotation.Y * Util.PI) / 180f;
-            Vector3 offset = new Vector3(0f, 0f, 1f);
-            Matrix3 mat = Matrix3.CreateRotationX(x) * Matrix3.CreateRotationY(y);
-            center = position + (offset * mat);
-            
-            viewMatrix = Matrix4.LookAt(position, center, up);
+            // Movement
+            GetInputs(keyboardState, out float ver, out float hor);
 
-            if (ortho) {
-                float projWidth = width;
-                float aspect = width / height;
-                float projHeight = width / aspect;
+            ver *= delta;
+            hor *= delta;
 
-                float left = -projWidth / 2f;
-                float right = projWidth / 2f;
-                float bottom = -projHeight / 2f;
-                float top = projHeight / 2f;
-                float near = 0.0001f;
-                float far = 10000f;
+            CalcVelocity(ver, hor, delta);
+            if (jumpRequest)
+                Jump();
 
-                projMatrix = Matrix4.CreateOrthographicOffCenter(left, right, bottom, top, near, far);
+            jumpRequest = false;
+
+            Position += velocity;
+            Console.Title = isGrounded.ToString() + "  " + velocity.ToString();
+            /*if (keyboardState.IsKeyDown(Key.W)) // flying
+                Move(0f, delta * mult);
+            else if (keyboardState.IsKeyDown(Key.S))
+                Move(180f, delta * mult);
+            if (keyboardState.IsKeyDown(Key.A))
+                Move(90f, delta * mult);
+            else if (keyboardState.IsKeyDown(Key.D))
+                Move(270f, delta * mult);
+            if (keyboardState.IsKeyDown(Key.Space)) 
+                Position.Y += delta * 6f;
+            else if (keyboardState.IsKeyDown(Key.ShiftLeft))
+                Position.Y -= delta * 6f;*/
+        }
+
+        private static void Jump()
+        {
+            verticalMomentum = jumpForce;
+            isGrounded = false;
+            jumpRequest = false;
+        }
+
+        private static void CalcVelocity(float ver, float hor, float delta)
+        {
+            if (verticalMomentum > maxFallSpeed && !isGrounded)
+                verticalMomentum += gravity * delta;
+
+            // x, z
+            Vector3 vForward = Vector3.UnitZ;
+            Vector3 vRight = Vector3.UnitX;
+            Matrix3 mat = Matrix3.CreateRotationY((Rotation.Y * Util.PI) / 180f);
+            velocity = (vForward * ver + vRight * hor) * mat;
+
+            // y
+            velocity.Y += verticalMomentum * delta;
+
+            if ((velocity.Z > 0f && front) || (velocity.Z < 0f && back))
+                velocity.Z = 0;
+            if ((velocity.X > 0f && right) || (velocity.X < 0f && left))
+                velocity.X = 0;
+
+            if (velocity.Y < 0f)
+                velocity.Y = CheckDownSpeed(velocity.Y);
+            else if (velocity.Y > 0f)
+                velocity.Y = CheckUpSpeed(velocity.Y);
+        }
+
+        private static void GetInputs(KeyboardState keyboardState, out float ver, out float hor)
+        {
+            ver = 0f;
+            hor = 0f;
+
+            float mult = keyboardState.IsKeyDown(Key.LControl) ? sprintSpeed : walfSpeed;
+            if (keyboardState.IsKeyDown(Key.W)) // flying
+                ver = mult;
+            else if (keyboardState.IsKeyDown(Key.S))
+                ver = -mult;
+            if (keyboardState.IsKeyDown(Key.A))
+                hor = mult;
+            else if (keyboardState.IsKeyDown(Key.D))
+                hor = -mult;
+
+            if (isGrounded && keyboardState.IsKeyDown(Key.Space))
+                jumpRequest = true;
+        }
+
+        private static float CheckDownSpeed(float downSpeed)
+        {
+            if (World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) ||
+                World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) ||
+                World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) ||
+                World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth)) {
+                isGrounded = true;
+                verticalMomentum = -0.0001f;
+                return 0;
             } else {
-                float fov = 45f;
-                float near = 0.0001f;
-                float far = 10000f;
-                float aspect = width / height;
-                 projMatrix = Matrix4.CreatePerspectiveFieldOfView(DegToRad(fov), aspect, near, far);
+                isGrounded = false;
+                return downSpeed;
+            }
+        }
+        private static float CheckUpSpeed(float upSpeed)
+        {
+            if (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
+                World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
+                World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) ||
+                World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth)) {
+                return 0;
+            }
+            else {
+                return upSpeed;
             }
         }
 
-        const float PI = (float)System.Math.PI;
-        const float PIDiv = PI / 180f;
-
-        static float DegToRad(float degrees)
+        public static bool front
         {
-            float radians = PIDiv * degrees;
-            return (radians);
+            get {
+                if (World.CheckForBlock(Position.X, Position.Y, Position.Z + playerWidth) ||
+                    World.CheckForBlock(Position.X, Position.Y + 1f, Position.Z + playerWidth))
+                    return true;
+                else
+                    return false;
+            }
+        }
+        public static bool back
+        {
+            get {
+                if (World.CheckForBlock(Position.X, Position.Y, Position.Z - playerWidth) ||
+                    World.CheckForBlock(Position.X, Position.Y + 1f, Position.Z - playerWidth))
+                    return true;
+                else
+                    return false;
+            }
+        }
+        public static bool left
+        {
+            get {
+                if (World.CheckForBlock(Position.X - playerWidth, Position.Y, Position.Z) ||
+                    World.CheckForBlock(Position.X - playerWidth, Position.Y + 1f, Position.Z))
+                    return true;
+                else
+                    return false;
+            }
+        }
+        public static bool right
+        {
+            get {
+                if (World.CheckForBlock(Position.X + playerWidth, Position.Y, Position.Z) ||
+                    World.CheckForBlock(Position.X + playerWidth, Position.Y + 1f, Position.Z))
+                    return true;
+                else
+                    return false;
+            }
         }
     }
 }

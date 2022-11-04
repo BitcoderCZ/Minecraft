@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Minecraft
@@ -19,14 +20,20 @@ namespace Minecraft
             new BlockType("cobblestone", true, 5), // 4
             new BlockType("oak_planks", true, 6), // 5
             new BlockType("oak_sapling", false, 7), // 6
-            new BlockType("bedrock", true, 8), // add water
-            //new BlockType("sand", true, 13), // 
+            new BlockType("bedrock", true, 8), // 7
+            new BlockType("sand", true, 9), // 8
+            new BlockType("granite", true, 10), // 9
+            new BlockType("polished_granite", true, 11), // 10
+            new BlockType("diorite", true, 12), // 11
+            new BlockType("polished_diorite", true, 13), // 12
+            new BlockType("andesite", true, 14), // 13
+            new BlockType("polished_andesite", true, 15), // 14
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f),
+            new BiomeAttribs("plains", 60, 14, 0.2f,new Lode("cave", 0, true, 5, 90, 0.08f, 0.42f, -100f),  new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
+                                new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
         };
-
         public static uint seed;
 
         public static Vector3 spawnPos;
@@ -44,10 +51,10 @@ namespace Minecraft
 
         public static void Update()
         {
-            if (BlockToChunk(Player.position) != prevPlayerChunk)
-                CheckViewDistance();
+            //if (BlockToChunk(Player.position) != prevPlayerChunk)
+            //    CheckViewDistance();
 
-            prevPlayerChunk = BlockToChunk(Player.position);
+            prevPlayerChunk = BlockToChunk(Player.Position);
         }
 
         public static void Generate()
@@ -56,11 +63,14 @@ namespace Minecraft
 
             for (int x = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; x < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; x++)
                 for (int z = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; z < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; z++) {
-                    CreateNewChunk(x, z);
+                    if (IsChunkInWorld(x, z))
+                        CreateNewChunk(x, z);
                 }
 
-            Player.position = spawnPos;
-            prevPlayerChunk = BlockToChunk(Player.position);
+            Player.Position = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
+            Player.Position.Y = (int)(Noise.Get2DPerlinNoise(new Vector2(Player.Position.X, Player.Position.Z), 0f, biomes[0].terrainScale)
+                * biomes[0].terrainHeight + biomes[0].minHeight) + 2.5f;
+            prevPlayerChunk = BlockToChunk(Player.Position);
 
             Console.WriteLine("WORLD:GENERATE:DONE");
         }
@@ -72,7 +82,7 @@ namespace Minecraft
 
         private static void CheckViewDistance()
         {
-            Flat2i playerChunk = BlockToChunk(Player.position);
+            Flat2i playerChunk = BlockToChunk(Player.Position);
 
             List<Flat2i> prevActiveChunks = new List<Flat2i>(activeChunks);
 
@@ -104,6 +114,21 @@ namespace Minecraft
             }
         }
 
+        public static bool CheckForBlock(float _x, float _y, float _z)
+        {
+            int x = (int)_x;
+            int y = (int)_y;
+            int z = (int)_z;
+
+            int xChunk = x / VoxelData.ChunkWidth;
+            int zChunk = z / VoxelData.ChunkWidth;
+
+            x -= (xChunk * VoxelData.ChunkWidth);
+            z -= (zChunk * VoxelData.ChunkWidth);
+
+            return blocktypes[chunks[xChunk, zChunk].GetBlock(x, y, z)].isSolid;
+        }
+
         public static uint GetGenBlock(int x, int y, int z)
         {
             // Immutable pass
@@ -116,15 +141,30 @@ namespace Minecraft
 
             // Basic terrain pass
             int terrainHeight = (int)(Noise.Get2DPerlinNoise(new Vector2(x, z), 0f, biomes[0].terrainScale) * biomes[0].terrainHeight + biomes[0].minHeight);
+            uint blockId;
 
             if (y == terrainHeight)
-                return 2;
+                blockId = 2;
             else if (y < terrainHeight && y >= terrainHeight - 3)
-                return 3;
+                blockId = 3;
             else if (y < terrainHeight)
-                return 1;
+                blockId = 1;
             else
                 return 0;
+
+            // second pass
+            for (int i = 0; i < biomes[0].lodes.Length; i++) {
+                Lode lode = biomes[0].lodes[i];
+                if (!lode.reachTerrain && y >= terrainHeight - 3)
+                    continue;
+                if (y >= lode.minHeight && y <= lode.maxHeight) {
+                    if (Noise.Get3DPerlin(new Vector3(x, y, z), lode.noiseOffset, lode.scale, lode.threshold))
+                        return lode.blockID;
+                }
+            }
+            
+
+            return blockId;
         }
         public static uint GetGenBlock(Vector3i pos)
             => GetGenBlock(pos.X, pos.Y, pos.Z);
@@ -134,6 +174,7 @@ namespace Minecraft
             Chunk chunk = new Chunk(new Flat2i(x, z));
             chunks[x, z] = chunk;
             activeChunks.Add(new Flat2i(x, z));
+            chunk.active = true;
         }
 
         private static bool IsChunkInWorld(int x, int z)
