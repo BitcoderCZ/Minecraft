@@ -116,7 +116,7 @@ namespace Minecraft
             if (!active)
                 return;
 
-            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(chunkPos.X * VoxelData.ChunkWidth, 0f, chunkPos.Z * VoxelData.ChunkWidth));
+            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X, 0f, pos.Z));
             s.UploadMat4("uTransform", ref transform);
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
             GL.Uniform1(5, Texture.taid);

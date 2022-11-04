@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    public static class Camera
+    public static class Player
     {
         public static Matrix4 viewMatrix;
         public static Matrix4 projMatrix;
-        public static Vector3 position = new Vector3(5f, VoxelData.ChunkHeight + 5f, 5f);
-        public static Vector3 center = new Vector3(0f, 0f, 0f);
-        public static Vector3 up = new Vector3(0f, 1f, 0f);
+        public static Vector3 position = Vector3.Zero;
+        private static Vector3 center = Vector3.Zero;
+        private static readonly Vector3 up = Vector3.UnitY;
         public static bool ortho = false;
         public static Vector3 Rotation;
 

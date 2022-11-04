@@ -33,7 +33,7 @@ namespace Minecraft
         protected override void OnLoad(EventArgs e)
         {
             GL.Enable(EnableCap.DebugOutput);
-            GL.DebugMessageCallback(MessageCallback, IntPtr.Zero);
+            //GL.DebugMessageCallback(MessageCallback, IntPtr.Zero);
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
@@ -49,10 +49,10 @@ namespace Minecraft
             base.WindowState = WindowState.Normal;
             GL.Viewport(0, 0, Width, Height);
             shader.Bind();
-            Camera.SetRotation(new Vector3(0f, 180f, 0f));
-            Camera.UpdateView(Width, Height);
-            shader.UploadMat4("uProjection", ref Camera.projMatrix);
-            shader.UploadMat4("uView", ref Camera.viewMatrix);
+            Player.SetRotation(new Vector3(0f, 180f, 0f));
+            Player.UpdateView(Width, Height);
+            shader.UploadMat4("uProjection", ref Player.projMatrix);
+            shader.UploadMat4("uView", ref Player.viewMatrix);
 
             LockMouse();
         }
@@ -67,56 +67,65 @@ namespace Minecraft
                 $"Severity:{severity}, Message: {Encoding.ASCII.GetString(managedArray)}");
         }
 
+        float halfSecondUpdate = 0f;
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             float delta = (float)e.Time;
 
             // Rotation
             if (keyboardState.IsKeyDown(Key.Left))
-                Camera.Rotation.Y += delta * 160f;
+                Player.Rotation.Y += delta * 160f;
             else if (keyboardState.IsKeyDown(Key.Right))
-                Camera.Rotation.Y -= delta * 160f;
+                Player.Rotation.Y -= delta * 160f;
             if (keyboardState.IsKeyDown(Key.Up))
-                Camera.Rotation.X -= delta * 80f;
+                Player.Rotation.X -= delta * 80f;
             else if (keyboardState.IsKeyDown(Key.Down))
-                Camera.Rotation.X += delta * 80f;
+                Player.Rotation.X += delta * 80f;
 
             if (mouseLocked) {
                 var mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
                 if (mouseDelta != Point.Empty) {
-                    Camera.Rotation.X += mouseDelta.Y * 0.25f;
-                    Camera.Rotation.Y += -mouseDelta.X * 0.25f;
+                    Player.Rotation.X += mouseDelta.Y * 0.25f;
+                    Player.Rotation.Y += -mouseDelta.X * 0.25f;
                     CenterCursor();
                 }
             }
 
-            if (Camera.Rotation.X < -85)
-                Camera.Rotation.X = -85;
-            else if (Camera.Rotation.X > 85)
-                Camera.Rotation.X = 85;
+            if (Player.Rotation.X < -85)
+                Player.Rotation.X = -85;
+            else if (Player.Rotation.X > 85)
+                Player.Rotation.X = 85;
 
             // Movement
             if (keyboardState.IsKeyDown(Key.W))
-                Camera.Move(0f, delta * 8f);
+                Player.Move(0f, delta * 8f);
             else if (keyboardState.IsKeyDown(Key.S))
-                Camera.Move(180f, delta * 8f);
+                Player.Move(180f, delta * 8f);
             if(keyboardState.IsKeyDown(Key.A))
-                Camera.Move(90f, delta * 8f);
+                Player.Move(90f, delta * 8f);
             else if (keyboardState.IsKeyDown(Key.D))
-                Camera.Move(270f, delta * 8f);
+                Player.Move(270f, delta * 8f);
             if (keyboardState.IsKeyDown(Key.Space))
-                Camera.position.Y += delta * 6f;
+                Player.position.Y += delta * 6f;
             else if (keyboardState.IsKeyDown(Key.ShiftLeft))
-                Camera.position.Y -= delta * 6f;
+                Player.position.Y -= delta * 6f;
 
-            Console.Title = Camera.Rotation.ToString();
+            Console.Title = Player.Rotation.ToString();
 
             // Other keyboard
             if (keyboardState.IsKeyDown(Key.Escape))
                 UnlockMouse();
 
             float FPS = 1f / delta;
-            Title = $"Minecraft FPS: {SystemPlus.MathPlus.Round(FPS, 2)}";
+
+            halfSecondUpdate += delta;
+            if (halfSecondUpdate > 0.5f) {
+                halfSecondUpdate = 0f;
+
+                Title = $"Minecraft FPS: {SystemPlus.MathPlus.Round(FPS, 2)}";
+            }
+
+            World.Update();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -125,9 +134,9 @@ namespace Minecraft
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             shader.Bind();
-            Camera.UpdateView(Width, Height);
-            shader.UploadMat4("uProjection", ref Camera.projMatrix);
-            shader.UploadMat4("uView", ref Camera.viewMatrix);
+            Player.UpdateView(Width, Height);
+            shader.UploadMat4("uProjection", ref Player.projMatrix);
+            shader.UploadMat4("uView", ref Player.viewMatrix);
             World.Render(shader);
             
             SwapBuffers();

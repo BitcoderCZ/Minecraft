@@ -72,7 +72,7 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Camera.cs" />
+    <Compile Include="Player.cs" />
     <Compile Include="Chunk.cs" />
     <Compile Include="Math\Flat2i.cs" />
     <Compile Include="Math\Vector2i.cs" />
