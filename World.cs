@@ -19,7 +19,7 @@ namespace Minecraft
             new BlockType("oak_planks", true, 6), // 5
             new BlockType("oak_sapling", false, 7), // 6
             new BlockType("bedrock", true, 8), // add water
-            new BlockType("sand", true, 13), // 
+            //new BlockType("sand", true, 13), // 
         };
 
         static Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
@@ -29,11 +29,50 @@ namespace Minecraft
             Console.WriteLine("WORLD:GENERATE:START");
             for (int x = 0; x < VoxelData.WorldSizeInChunks; x++)
                 for (int z = 0; z < VoxelData.WorldSizeInChunks; z++) {
-                    Chunk chunk = Chunk.Create(new Vector2i(x, z));
-                    chunks[x, z] = chunk;
+                    CreateNewChunk(x, z);
                 }
             Console.WriteLine("WORLD:GENERATE:DONE");
         }
+
+        public static uint GetGenBlock(int x, int y, int z)
+        {
+            if (!IsBlockInWorld(x, y, z))
+                return 0;
+            if (y == 0)
+                return 7;
+            else if (y == VoxelData.ChunkHeight - 1)
+                return 2;
+            else
+                return 3;
+        }
+        public static uint GetGenBlock(Vector3i pos)
+            => GetGenBlock(pos.X, pos.Y, pos.Z);
+
+        private static void CreateNewChunk(int x, int z)
+        {
+            Chunk chunk = new Chunk(new Flat2i(x, z));
+            chunks[x, z] = chunk;
+        }
+
+        private static bool IsChunkInWorld(Vector2i pos)
+        {
+            if (pos.X > 0 && pos.X < VoxelData.WorldSizeInChunks && pos.Y > 0 && pos.Y < VoxelData.WorldSizeInChunks)
+                return true;
+            else
+                return false;
+        }
+
+        private static bool IsBlockInWorld(int x, int y, int z)
+        {
+            if (x > 0 && x < VoxelData.WorldSizeInBlocks
+                && y > 0 && y < VoxelData.ChunkHeight
+                && z > 0 && z < VoxelData.WorldSizeInBlocks)
+                return true;
+            else
+                return false;
+        }
+        private static bool IsBlockInWorld(Vector3i pos)
+         => IsBlockInWorld(pos.X, pos.Y, pos.Z);
 
         public static void Render(Shader s)
         {

@@ -39,8 +39,8 @@ namespace Minecraft
             /*new TextureInfo("water_flow"), // 9
             new TextureInfo("water_still"), // 10
             new TextureInfo("lava_flow"), // 11
-            new TextureInfo("lava_still"), // 12
-            new TextureInfo("sand"), */// 13
+            new TextureInfo("lava_still"),*/ // 12
+            new TextureInfo("sand"), // 13
         };
 
         public static void CreateTA()

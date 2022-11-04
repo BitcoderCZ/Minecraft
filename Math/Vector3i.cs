@@ -46,6 +46,11 @@ namespace Minecraft.Math
         public static Vector3i operator -(Vector3i a)
             => new Vector3i(-a.X, -a.Y, -a.Z);
 
+        public static Vector3i operator +(Vector3i a, Vector2i b)
+            => new Vector3i(a.X + b.X, a.Y + b.Y, a.Z);
+        public static Vector3i operator +(Vector3i a, Flat2i b)
+            => new Vector3i(a.X + b.X, a.Y, a.Z + b.Z);
+
         public static implicit operator Vector3(Vector3i a)
             => new Vector3((float)a.X, (float)a.Y, (float)a.Z);
         public static explicit operator Vector3i(Vector3 a)

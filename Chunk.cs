@@ -17,39 +17,35 @@ namespace Minecraft
 
         public readonly uint[] blocks;
 
-        public Vector2i pos;
+        public Flat2i chunkPos;
+        public Flat2i pos;
+        public bool active;
 
         private int vao;
         private int vbo;
         private int ebo;
 
-        public Chunk(Vector2i _position, uint[] _blocks)
+        public Chunk(Flat2i _position, uint[] _blocks)
         {
-            pos = _position;
+            chunkPos = _position;
+            pos = new Flat2i(chunkPos.X * VoxelData.ChunkWidth, chunkPos.Z * VoxelData.ChunkWidth);
             blocks = _blocks;
+            PopulateBlocks();
             CreateMeshData();
             InitMesh();
+            active = true;
         }
 
-        public Chunk(Vector2i _position) : this(_position, new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight])
+        public Chunk(Flat2i _position) : this(_position, new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight])
         { }
 
-        public static Chunk Create(Vector2i _pos)
+        private void PopulateBlocks()
         {
-            Chunk chunk = new Chunk(_pos);
             for (int x = 0; x < VoxelData.ChunkWidth; x++)
                 for (int z = 0; z < VoxelData.ChunkWidth; z++)
                     for (int y = 0; y < VoxelData.ChunkHeight; y++) {
-                        if (y == 0)
-                            chunk.SetBlock(x, y, z, 7);
-                        else if (y != VoxelData.ChunkHeight - 1)
-                            chunk.SetBlock(x, y, z, 3);
-                        else
-                            chunk.SetBlock(x, y, z, 2);
+                        SetBlock(x, y, z, World.GetGenBlock(new Vector3i(x, y, z) + pos));
                     }
-            chunk.CreateMeshData();
-            chunk.CreateMesh();
-            return chunk;
         }
 
         public void CreateMeshData()
@@ -69,7 +65,7 @@ namespace Minecraft
         void AddVoxelDataToChunk(Vector3i pos, uint blockId)
         {
             for (int p = 0; p < 6; p++) {
-                if (GetBlock(pos + VoxelData.faceChecks[p]) == 0) {
+                if (!CheckBlock(pos + VoxelData.faceChecks[p])) {
                     uint texId = World.blocktypes[blockId].GetTextureID(p);
                     vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 0]], VoxelData.voxelUvs[0], texId));
                     vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 1]], VoxelData.voxelUvs[1], texId));
@@ -117,7 +113,10 @@ namespace Minecraft
 
         public void Render(Shader s)
         {
-            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X * VoxelData.ChunkWidth, 0f, pos.Y * VoxelData.ChunkWidth));
+            if (!active)
+                return;
+
+            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(chunkPos.X * VoxelData.ChunkWidth, 0f, chunkPos.Z * VoxelData.ChunkWidth));
             s.UploadMat4("uTransform", ref transform);
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
             GL.Uniform1(5, Texture.taid);
@@ -128,23 +127,42 @@ namespace Minecraft
 
         public void SetBlock(int X, int Y, int Z, uint id)
         {
-            if (X < 0 || X >= VoxelData.ChunkWidth || Y < 0 || Y >= VoxelData.ChunkHeight || Z < 0 || Z >= VoxelData.ChunkWidth)
+            if (!IsBlockInChunk(X, Y, Z))
                 return;
+
             blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)] = id;
         }
-        
         public void SetBlock(Vector3i pos, uint id)
             => SetBlock(pos.X, pos.Y, pos.Z, id);
 
         public uint GetBlock(int X, int Y, int Z)
         {
-            if (X < 0 || X >= VoxelData.ChunkWidth || Y < 0 || Y >= VoxelData.ChunkHeight || Z < 0 || Z >= VoxelData.ChunkWidth)
+            if (!IsBlockInChunk(X, Y, Z))
                 return 0;
 
             return blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)];
         }
-            
         public uint GetBlock(Vector3i pos)
             => GetBlock(pos.X, pos.Y, pos.Z);
+
+        public bool CheckBlock(int X, int Y, int Z)
+        {
+            if (!IsBlockInChunk(X, Y, Z))
+                return World.blocktypes[World.GetGenBlock(X + pos.X, Y, Z + pos.Z)].isSolid;
+
+            return World.blocktypes[blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)]].isSolid;
+        }
+        public bool CheckBlock(Vector3i pos)
+            => CheckBlock(pos.X, pos.Y, pos.Z);
+
+        public bool IsBlockInChunk(int X, int Y, int Z)
+        {
+            if (X < 0 || X >= VoxelData.ChunkWidth || Y < 0 || Y >= VoxelData.ChunkHeight || Z < 0 || Z >= VoxelData.ChunkWidth)
+                return false;
+            else
+                return true;
+        }
+        public bool IsBlockInChunk(Vector3i pos)
+           => IsBlockInChunk(pos.X, pos.Y, pos.Z);
     }
 }
