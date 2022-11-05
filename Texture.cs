@@ -17,14 +17,16 @@ namespace Minecraft
     public class Texture
     {
         public static int taid;
+        public static int uiid;
 
-        public static readonly int[] textures = new int[1];
+        public static readonly int[] textures = new int[2];
 
         public int id;
         public int Width;
         public int Height;
 
         private static readonly string texPath = Environment.CurrentDirectory + "/Data/Textures/Blocks/";
+        private static readonly string uiPath = Environment.CurrentDirectory + "/Data/Textures/UI/";
 
         private static readonly TextureInfo[] blockTextures = new TextureInfo[]
         {
@@ -44,8 +46,72 @@ namespace Minecraft
             new TextureInfo("andesite"), // 14
             new TextureInfo("polished_andesite"), // 15
         };
+        private static readonly TextureInfo[] uiTextures = new TextureInfo[]
+        {
+            new TextureInfo("Crosshair")
+        };
 
-        public static void CreateTA()
+        public static void CreateUITA()
+        {
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.GenTextures(1, out uiid);
+            GL.BindTexture(TextureTarget.Texture2DArray, uiid);
+
+            GL.PixelStore(PixelStoreParameter.UnpackRowLength, 16/*width*/);
+            GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureMaxLevel, 4);
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+            GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba32f, 128, 128, uiTextures.Length/*count*/);
+
+            Bitmap bm;
+            BitmapData data;
+
+            Console.WriteLine("TEXTURE:BLOCKARRAY:GENERATE:UI:START");
+            for (int i = 0; i < uiTextures.Length; i++) {
+                if (!File.Exists(texPath + uiTextures[i].name + ".png")) {
+                    Console.WriteLine($"Block texture {uiTextures[i].name}, wasn't found. skipped.");
+                    continue;
+                }
+
+                bm = new Bitmap(texPath + uiTextures[i].name + ".png");
+
+                if (uiTextures[i].flip != TexFlip.None) {
+                    if ((uiTextures[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
+                        bm.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                    if ((uiTextures[i].flip & TexFlip.Horizontal) == TexFlip.Horizontal)
+                        bm.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                }
+
+                if (uiTextures[i].colorFilter != Vector3.One) {
+                    Vector3 filter = uiTextures[i].colorFilter;
+                    for (int x = 0; x < bm.Width; x++)
+                        for (int y = 0; y < bm.Height; y++) {
+                            Color c = bm.GetPixel(x, y);
+                            float r = (float)(c.R / 255f) * filter.X;
+                            float g = (float)(c.G / 255f) * filter.Y;
+                            float b = (float)(c.B / 255f) * filter.Z;
+                            bm.SetPixel(x, y, Color.FromArgb(255, (byte)(r * 255f), (byte)(g * 255f), (byte)(b * 255f)));
+                        }
+                }
+
+                data = bm.LockBits(new Rectangle(0, 0, bm.Width, bm.Height), ImageLockMode.ReadOnly,
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, i, bm.Width, bm.Height, 1, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+                bm.UnlockBits(data);
+                bm.Dispose();
+            }
+            Console.WriteLine($"TEXTURE:BLOCKARRAY:GENERATE:UI:DONE count: {uiTextures.Length}");
+        }
+
+        public static void CreateBlockTA()
         {
             GL.ActiveTexture(TextureUnit.Texture1);
             GL.GenTextures(1, out taid);
@@ -66,7 +132,7 @@ namespace Minecraft
             Bitmap bm;
             BitmapData data;
 
-            Console.WriteLine("TEXTURE:BLOCKARRAY:GENERATE:START");
+            Console.WriteLine("TEXTURE:BLOCKARRAY:GENERATE:BLOCK:START");
             for (int i = 0; i < blockTextures.Length; i++) {
                 if (!File.Exists(texPath + blockTextures[i].name + ".png")) {
                     Console.WriteLine($"Block texture {blockTextures[i]}, wasn't found. skipped.");
@@ -102,7 +168,7 @@ namespace Minecraft
                 bm.UnlockBits(data);
                 bm.Dispose();
             }
-            Console.WriteLine($"TEXTURE:BLOCKARRAY:GENERATE:DONE count: {blockTextures.Length}");
+            Console.WriteLine($"TEXTURE:BLOCKARRAY:GENERATE:BLOCK:DONE count: {blockTextures.Length}");
         }
 
        /* public Texture(string path, int _id)

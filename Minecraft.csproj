@@ -90,6 +90,7 @@
   <ItemGroup>
     <Compile Include="BiomeAttribs.cs" />
     <Compile Include="BlockType.cs" />
+    <Compile Include="GUI.cs" />
     <Compile Include="Lode.cs" />
     <Compile Include="Math\Noise.cs" />
     <Compile Include="Camera.cs" />

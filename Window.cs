@@ -10,13 +10,17 @@ using OpenTK.Input;
 using System.Runtime.InteropServices;
 
 using Minecraft.Math;
+using System.ComponentModel;
 
 namespace Minecraft
 {
     public class Window : GameWindow
     {
+        public bool Running;
+
         Shader shader;
-        KeyboardState keyboardState;
+        Shader uiShader;
+        public KeyboardState keyboardState;
 
         // Mouse
         bool mouseLocked;
@@ -34,6 +38,8 @@ namespace Minecraft
 
         protected override void OnLoad(EventArgs e)
         {
+            Running = true;
+
             GL.Enable(EnableCap.DebugOutput);
             debMessageCallback = new DebugProc(MessageCallback); // Fixed error: A callback was made on a garbage collected delegate
             GL.DebugMessageCallback(debMessageCallback, IntPtr.Zero); 
@@ -43,8 +49,11 @@ namespace Minecraft
 
             shader = new Shader();
             shader.Compile("shader");
+            uiShader = new Shader();
+            uiShader.Compile("ui");
 
-            Texture.CreateTA();
+            Texture.CreateBlockTA();
+            GUI.Init();
 
             World.Generate();
 
@@ -127,6 +136,7 @@ namespace Minecraft
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
             World.Render(shader);
+            GUI.Render(uiShader);
             
             SwapBuffers();
         }
@@ -164,6 +174,11 @@ namespace Minecraft
             mouseLocked = false;
             CursorVisible = true;
             System.Windows.Forms.Cursor.Position = origCursorPosition;
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            Running = false;
         }
     }
 }

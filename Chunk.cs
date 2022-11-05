@@ -26,16 +26,13 @@ namespace Minecraft
         {
             get => active;
             set {
-                /*if (value == false && active == true) {
-                    GL.DeleteBuffer(ebo);
-                    GL.DeleteBuffer(vbo);
-                } else if (value = true && active = false)*/
                 active = value;
             }
         }
         private bool active;
         public bool BlocksGenerated;
         private bool CreatedMesh;
+        private bool CreatedMeshArrays;
 
         private int vao;
         private int vbo;
@@ -46,6 +43,7 @@ namespace Minecraft
             active = false;
             BlocksGenerated = false;
             CreatedMesh = false;
+            CreatedMeshArrays = false;
             chunkPos = _position;
             pos = new Flat2i(chunkPos.X * VoxelData.ChunkWidth, chunkPos.Z * VoxelData.ChunkWidth);
             blocks = new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight];
@@ -61,6 +59,7 @@ namespace Minecraft
             vertsA = vertices.ToArray();
             trigsA = triangles.ToArray();
             //InitMesh();
+            CreatedMeshArrays = true;
             active = true;
         }
 
@@ -142,7 +141,7 @@ namespace Minecraft
 
         public void Render(Shader s)
         {
-            if (!Active)
+            if (!Active || !CreatedMeshArrays)
                 return;
 
             if (!CreatedMesh)

@@ -48,6 +48,8 @@ namespace Minecraft
 
         private static TaskFactory factory;
 
+        private static Thread createChunksThread;
+
         static World()
         {
             factory = new TaskFactory();
@@ -55,6 +57,8 @@ namespace Minecraft
             seed = (uint)r.Next();
             Noise.SetSeed(seed);
             spawnPos = new Vector3(VoxelData.WorldSizeInBlocks / 2f, VoxelData.ChunkHeight + 2f, VoxelData.WorldSizeInBlocks / 2f);
+            createChunksThread = new Thread(new ThreadStart(CreateChunks));
+            createChunksThread.Start();
         }
 
         public static void Update()
@@ -62,10 +66,25 @@ namespace Minecraft
             if (BlockToChunk(Player.Position) != prevPlayerChunk)
                 CheckViewDistance();
 
-            if (chunksToCreate.Count > 0 && !isCreatingChunks)
-                 factory.StartNew(CreateChunks);//Task.Factory.StartNew(CreateChunks);
+            /*if (chunksToCreate.Count > 0 && !isCreatingChunks)
+                 factory.StartNew(CreateChunks);*/
+            /*if (chunksToCreate.Count > 0)
+                while (chunksToCreate.Count > 0) {
+                    chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
+                    chunksToCreate.RemoveAt(0);
+                }*/
 
             Console.Title = $"Chunks to create: {chunksToCreate.Count}, creating: {isCreatingChunks}";
+        }
+
+        private static void CreateChunks()
+        {
+            while (Program.Window.Running) {
+                if (chunksToCreate.Count > 0) {
+                    chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
+                    chunksToCreate.RemoveAt(0);
+                }
+            }
         }
 
         public static void Generate()
@@ -90,7 +109,7 @@ namespace Minecraft
             Console.WriteLine("WORLD:GENERATE:DONE");
         }
 
-        private static async Task<object> CreateChunks()
+       /* private static async Task<object> CreateChunks()
         {
             isCreatingChunks = true;
 
@@ -101,7 +120,7 @@ namespace Minecraft
 
             isCreatingChunks = false;
             return null;
-        }
+        }*/
 
         private static Flat2i BlockToChunk(Vector3i v)
             => new Flat2i(v.X / VoxelData.ChunkWidth, v.Z / VoxelData.ChunkWidth);
@@ -126,23 +145,20 @@ namespace Minecraft
                     if (chunks[x, z] == null) {
                         chunks[x, z] = new Chunk(chp, false);
                         chunksToCreate.Add(new Flat2i(x, z));
-                        activeChunks.Add(chp);
                     }
                     else if (!chunks[x, z].Active) {
                         chunks[x, z].Active = true;
-                        activeChunks.Add(chp);
                     }
+                    activeChunks.Add(chp);
 
                     for (int i = 0; i < prevActiveChunks.Count; i++) {
                         if (prevActiveChunks[i] == chp) {
                             prevActiveChunks.RemoveAt(i);
-                            break;
                         }
                     }
                 }
 
             for (int i = 0; i < prevActiveChunks.Count; i++) {
-                activeChunks.Remove(prevActiveChunks[i]);
                 chunks[prevActiveChunks[i].X, prevActiveChunks[i].Z].Active = false;
             }
         }

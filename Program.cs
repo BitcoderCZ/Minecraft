@@ -9,7 +9,7 @@ namespace Minecraft
 {
     static class Program
     {
-        public static GameWindow Window;
+        public static Window Window;
 
         static void Main(string[] args)
         {

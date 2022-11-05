@@ -10,8 +10,8 @@ namespace Minecraft
 {
     public static class Player
     {
-        public const float walfSpeed = 4f;
-        public const float sprintSpeed = 6f;
+        public const float walfSpeed = 5f;
+        public const float sprintSpeed = 8f;
         public const float gravity = -9.8f * 1.5f;
         public const float jumpForce = 6f;
 
