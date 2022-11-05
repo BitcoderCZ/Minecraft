@@ -48,12 +48,13 @@ namespace Minecraft
         };
         private static readonly TextureInfo[] uiTextures = new TextureInfo[]
         {
-            new TextureInfo("Crosshair")
+            new TextureInfo("Crosshair"),
+            new TextureInfo("SolidWhite"),
         };
 
         public static void CreateUITA()
         {
-            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.ActiveTexture(TextureUnit.Texture2);
             GL.GenTextures(1, out uiid);
             GL.BindTexture(TextureTarget.Texture2DArray, uiid);
 
@@ -74,12 +75,12 @@ namespace Minecraft
 
             Console.WriteLine("TEXTURE:BLOCKARRAY:GENERATE:UI:START");
             for (int i = 0; i < uiTextures.Length; i++) {
-                if (!File.Exists(texPath + uiTextures[i].name + ".png")) {
+                if (!File.Exists(uiPath + uiTextures[i].name + ".png")) {
                     Console.WriteLine($"Block texture {uiTextures[i].name}, wasn't found. skipped.");
                     continue;
                 }
 
-                bm = new Bitmap(texPath + uiTextures[i].name + ".png");
+                bm = new Bitmap(uiPath + uiTextures[i].name + ".png");
 
                 if (uiTextures[i].flip != TexFlip.None) {
                     if ((uiTextures[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
@@ -127,7 +128,7 @@ namespace Minecraft
             GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
             GL.TexParameter(TextureTarget.Texture2DArray, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
-            GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba32f, 16, 16, blockTextures.Length/*count*/);
+            GL.TexStorage3D(TextureTarget3d.Texture2DArray, 1, SizedInternalFormat.Rgba32f, 16, 16, blockTextures.Length);
 
             Bitmap bm;
             BitmapData data;
@@ -171,17 +172,17 @@ namespace Minecraft
             Console.WriteLine($"TEXTURE:BLOCKARRAY:GENERATE:BLOCK:DONE count: {blockTextures.Length}");
         }
 
-       /* public Texture(string path, int _id)
+        public Texture(string path)
         {
             DirectBitmap db = DirectBitmap.Load(path, false);
 
             Width = db.Width;
             Height = db.Height;
 
+            int slot = 0;
+            GL.ActiveTexture(TextureUnit.Texture0 + slot);
             GL.GenTextures(1, out id);
             GL.BindTexture(TextureTarget.Texture2D, id);
-
-            textures[_id - 1] = id;
 
             BitmapData data = db.Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadOnly,
                 System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -198,7 +199,34 @@ namespace Minecraft
             db.Bitmap.UnlockBits(data);
 
             db.Dispose();
-        }*/
+        }
+
+        public Texture(DirectBitmap db)
+        {
+            Width = db.Width;
+            Height = db.Height;
+
+            int slot = 0;
+            GL.ActiveTexture(TextureUnit.Texture0 + slot);
+            GL.GenTextures(1, out id);
+            GL.BindTexture(TextureTarget.Texture2D, id);
+
+            BitmapData data = db.Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0,
+                PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            db.Bitmap.UnlockBits(data);
+
+            db.Dispose();
+        }
     }
 
     public struct TextureInfo

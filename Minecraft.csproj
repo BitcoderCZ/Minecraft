@@ -101,10 +101,12 @@
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RenderObject.cs" />
     <Compile Include="Shader.cs" />
     <Compile Include="Texture.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="Vertex.cs" />
+    <Compile Include="TexVertex.cs" />
     <Compile Include="VoxelData.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="World.cs" />

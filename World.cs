@@ -41,7 +41,7 @@ namespace Minecraft
 
         private static Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
         private static List<Flat2i> activeChunks = new List<Flat2i>();
-        private static Flat2i prevPlayerChunk;
+        public static Flat2i prevPlayerChunk;
 
         private static List<Flat2i> chunksToCreate = new List<Flat2i>();
         private static bool isCreatingChunks;
@@ -65,16 +65,6 @@ namespace Minecraft
         {
             if (BlockToChunk(Player.Position) != prevPlayerChunk)
                 CheckViewDistance();
-
-            /*if (chunksToCreate.Count > 0 && !isCreatingChunks)
-                 factory.StartNew(CreateChunks);*/
-            /*if (chunksToCreate.Count > 0)
-                while (chunksToCreate.Count > 0) {
-                    chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
-                    chunksToCreate.RemoveAt(0);
-                }*/
-
-            Console.Title = $"Chunks to create: {chunksToCreate.Count}, creating: {isCreatingChunks}";
         }
 
         private static void CreateChunks()
@@ -109,23 +99,15 @@ namespace Minecraft
             Console.WriteLine("WORLD:GENERATE:DONE");
         }
 
-       /* private static async Task<object> CreateChunks()
-        {
-            isCreatingChunks = true;
-
-            while (chunksToCreate.Count > 0) {
-                chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
-                chunksToCreate.RemoveAt(0);
-            }
-
-            isCreatingChunks = false;
-            return null;
-        }*/
-
-        private static Flat2i BlockToChunk(Vector3i v)
+        public static Flat2i BlockToChunk(Vector3i v)
             => new Flat2i(v.X / VoxelData.ChunkWidth, v.Z / VoxelData.ChunkWidth);
-        private static Flat2i BlockToChunk(Vector3 v)
+        public static Flat2i BlockToChunk(Vector3 v)
             => new Flat2i((int)v.X / VoxelData.ChunkWidth, (int)v.Z / VoxelData.ChunkWidth);
+
+        public static Chunk GetChunkFromBlock(Vector3i v)
+            => chunks[v.X / VoxelData.ChunkWidth, v.Z / VoxelData.ChunkWidth];
+        public static Chunk GetChunkFromBlock(Vector3 v)
+            => chunks[(int)v.X / VoxelData.ChunkWidth, (int)v.Z / VoxelData.ChunkWidth];
 
         private static void CheckViewDistance()
         {

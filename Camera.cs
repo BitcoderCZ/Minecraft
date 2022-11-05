@@ -15,6 +15,19 @@ namespace Minecraft
         private static readonly Vector3 up = Vector3.UnitY;
         public static bool ortho = false;
 
+        public static Vector3 Offset = new Vector3(0f, 1.7f, 0f);
+
+        public static Vector3 Forward
+        {
+            get {
+                Player.Rotation.Y = mod(Player.Rotation.Y, 360);
+                float x = (Player.Rotation.X * Util.PI) / 180f;
+                float y = (Player.Rotation.Y * Util.PI) / 180f;
+                Matrix3 mat = Matrix3.CreateRotationX(x) * Matrix3.CreateRotationY(y);
+                return Vector3.UnitZ * mat;
+            }
+        }
+
         private static float mod(float x, float m)
         {
             float r = x % m;
@@ -28,7 +41,7 @@ namespace Minecraft
             float y = (Player.Rotation.Y * Util.PI) / 180f;
             Vector3 offset = new Vector3(0f, 0f, 1f);
             Matrix3 mat = Matrix3.CreateRotationX(x) * Matrix3.CreateRotationY(y);
-            Vector3 pos = Player.Position + new Vector3(0f, 1.7f, 0f);
+            Vector3 pos = Player.Position + Offset;
             center = pos + (offset * mat);
             
             viewMatrix = Matrix4.LookAt(pos, center, up);

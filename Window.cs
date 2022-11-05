@@ -19,6 +19,7 @@ namespace Minecraft
         public bool Running;
 
         Shader shader;
+        Shader texShader;
         Shader uiShader;
         public KeyboardState keyboardState;
 
@@ -46,11 +47,15 @@ namespace Minecraft
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             shader = new Shader();
             shader.Compile("shader");
             uiShader = new Shader();
             uiShader.Compile("ui");
+            texShader = new Shader();
+            texShader.Compile("tex");
 
             Texture.CreateBlockTA();
             GUI.Init();
@@ -128,6 +133,7 @@ namespace Minecraft
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
+            //GL.Disable(EnableCap.Blend);
             GL.ClearColor(Color.Blue);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -136,6 +142,13 @@ namespace Minecraft
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
             World.Render(shader);
+
+            //GL.Enable(EnableCap.Blend);
+            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            texShader.Bind();
+            shader.UploadMat4("uProjection", ref Camera.projMatrix);
+            shader.UploadMat4("uView", ref Camera.viewMatrix);
+            Player.Render(texShader);
             GUI.Render(uiShader);
             
             SwapBuffers();
@@ -152,7 +165,10 @@ namespace Minecraft
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            LockMouse();
+            if (!mouseLocked)
+                LockMouse();
+            else
+                Player.MouseDown(e.Button);
         }
 
         // Mouse
@@ -174,6 +190,11 @@ namespace Minecraft
             mouseLocked = false;
             CursorVisible = true;
             System.Windows.Forms.Cursor.Position = origCursorPosition;
+        }
+
+        protected override void OnMouseWheel(MouseWheelEventArgs e)
+        {
+            Player.MouseScrool(e.Delta);
         }
 
         protected override void OnClosed(EventArgs e)

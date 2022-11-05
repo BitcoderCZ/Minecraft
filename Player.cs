@@ -1,36 +1,54 @@
-﻿using OpenTK;
+﻿using Minecraft.Math;
+using OpenTK;
 using OpenTK.Input;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SystemPlus;
+using SystemPlus.Utils;
 
 namespace Minecraft
 {
     public static class Player
     {
-        public const float walfSpeed = 5f;
-        public const float sprintSpeed = 8f;
-        public const float gravity = -9.8f * 1.5f;
-        public const float jumpForce = 6f;
+        private const float walfSpeed = 5f;
+        private const float sprintSpeed = 8f;
+        private const float gravity = -9.8f * 1.5f;
+        private const float jumpForce = 6f;
 
-        public const float maxFallSpeed = -25f;
+        private const float maxFallSpeed = -25f;
 
-        public const float playerWidth = 0.25f;
-        public const float playerHeight = 1.85f;
+        private const float playerWidth = 0.25f;
+        private const float playerHeight = 1.85f;
 
-        public static bool isGrounded;
+        private static bool isGrounded;
 
         public static Vector3 Position = Vector3.Zero;
         public static Vector3 Rotation;
         private static Vector3 velocity;
-        public static float verticalMomentum;
-        public static bool jumpRequest;
+        private static float verticalMomentum;
+        private static bool jumpRequest;
+
+        private static float checkIncrement = 0.05f;
+        private static float reach = 8f;
+        private static uint selectedBlock = 1;
+
+        private static RenderObject highlightblock;
+        private static Vector3 placeBlock;
 
         static Player()
         {
             velocity = Vector3.Zero;
+            Util.CreateCube(1.1f, out TexVertex[] verts, out uint[] tris);
+            DirectBitmap db = new DirectBitmap(16, 16);
+            db.Clear(Color.FromArgb(255 / 4, 255, 255, 255));
+            Texture solidWhite = new Texture(db);
+            highlightblock = new RenderObject(verts, tris, solidWhite.id);
+            highlightblock.Active = false;
+            placeBlock = -Vector3.One;
         }
 
         public static void SetRotation(Vector3 rot)
@@ -45,8 +63,15 @@ namespace Minecraft
             Position += move * mat;
         }
 
+        public static void Render(Shader s)
+        {
+            highlightblock.Render(s);
+        }
+
         public static void Update(KeyboardState keyboardState, float delta)
         {
+            PlaceCursorBlock();
+
             // Movement
             GetInputs(keyboardState, out float ver, out float hor);
 
@@ -60,6 +85,8 @@ namespace Minecraft
             jumpRequest = false;
 
             Position += velocity;
+
+            Console.Title = $"Player pos: {Position}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}";
             /*if (keyboardState.IsKeyDown(Key.W)) // flying
                 Move(0f, delta * mult);
             else if (keyboardState.IsKeyDown(Key.S))
@@ -123,6 +150,56 @@ namespace Minecraft
 
             if (isGrounded && keyboardState.IsKeyDown(Key.Space))
                 jumpRequest = true;
+        }
+
+        public static void MouseDown(MouseButton button)
+        {
+            if (button == MouseButton.Left && highlightblock.Active) {
+                Vector3i block = (Vector3i)highlightblock.Position;
+                block += Vector3i.One;
+                World.GetChunkFromBlock(block).SetBlockGlobalPos(block, 0, true);
+            } else if (button == MouseButton.Right && placeBlock != -Vector3.One) {
+                Vector3 block = placeBlock;
+                Vector3i v = new Vector3i(MathPlus.RoundToInt(block.X), MathPlus.RoundToInt(block.Y), MathPlus.RoundToInt(block.Z));
+                World.GetChunkFromBlock(block).SetBlockGlobalPos(v, selectedBlock, true);
+            }
+        }
+
+        public static void MouseScrool(int scrool)
+        {
+            if (scrool > 0)
+                selectedBlock++;
+            else
+                selectedBlock--;
+
+            if (selectedBlock >= World.blocktypes.Length)
+                selectedBlock = 1;
+            else if (selectedBlock < 1)
+                selectedBlock = (uint)World.blocktypes.Length - 1;
+        }
+
+        private static void PlaceCursorBlock()
+        {
+            float step = checkIncrement;
+            Vector3 lastPos = new Vector3();
+
+            while (step < reach) {
+                Vector3 pos = Position + Camera.Offset + (Camera.Forward * step);
+
+                if (World.CheckForBlock(pos)) {
+                    highlightblock.Position = (Vector3i)pos - new Vector3(0.0625f, 0.0625f, 0.0625f);
+                    placeBlock = (Vector3i)lastPos;
+                    highlightblock.Active = true;
+                    return;
+                }
+
+                lastPos = pos;
+
+                step += checkIncrement;
+            }
+
+            highlightblock.Active = false;
+            placeBlock = -Vector3i.One;
         }
 
         private static float CheckDownSpeed(float downSpeed)
