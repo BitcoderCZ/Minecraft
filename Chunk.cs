@@ -1,4 +1,6 @@
-﻿using Minecraft.Math;
+﻿using Minecraft.Graphics;
+using Minecraft.Math;
+using Minecraft.VertexTypes;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Platform.Windows;
@@ -161,11 +163,11 @@ namespace Minecraft
             else if (CreatedMesh == 2) {
                 CreateMesh();
                 CreatedMesh = 1;
-                Console.WriteLine("Chunk Update");
             }
 
             Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X, 0f, pos.Z));
             s.UploadMat4("uTransform", ref transform);
+            GL.ActiveTexture(TextureUnit.Texture1);
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
             GL.Uniform1(5, Texture.taid);
 

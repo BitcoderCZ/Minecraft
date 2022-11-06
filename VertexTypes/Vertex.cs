@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Minecraft
+namespace Minecraft.VertexTypes
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct Vertex

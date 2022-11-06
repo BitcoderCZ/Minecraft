@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Minecraft
+namespace Minecraft.Graphics
 {
     public static class Camera // Eye level - 1.62, height - 1.85, width - 0.925
     {

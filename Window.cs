@@ -11,11 +11,15 @@ using System.Runtime.InteropServices;
 
 using Minecraft.Math;
 using System.ComponentModel;
+using Minecraft.Graphics;
+using Minecraft.Graphics.UI;
 
 namespace Minecraft
 {
     public class Window : GameWindow
     {
+        public float AspectRatio;
+
         public bool Running;
 
         Shader shader;
@@ -32,6 +36,7 @@ namespace Minecraft
         {
             Width = 1280;
             Height = 720;
+            AspectRatio = (float)Width / (float)Height;
             Title = "Minecraft";
         }
 
@@ -59,6 +64,7 @@ namespace Minecraft
 
             Texture.CreateBlockTA();
             GUI.Init();
+            GUI.SetScene(0); // Game
 
             World.Generate();
 
@@ -108,16 +114,18 @@ namespace Minecraft
                 }
             }
 
-            if (Player.Rotation.X < -85)
-                Player.Rotation.X = -85;
-            else if (Player.Rotation.X > 85)
-                Player.Rotation.X = 85;
+            if (Player.Rotation.X < -89)
+                Player.Rotation.X = -89;
+            else if (Player.Rotation.X > 89)
+                Player.Rotation.X = 89;
 
             Player.Update(keyboardState, delta);
 
             // Other keyboard
-            if (keyboardState.IsKeyDown(Key.Escape))
+            if (keyboardState.IsKeyDown(Key.Escape)) {
                 UnlockMouse();
+                GUI.SetScene(1);
+            }
 
             float FPS = 1f / delta;
 
@@ -133,7 +141,6 @@ namespace Minecraft
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            //GL.Disable(EnableCap.Blend);
             GL.ClearColor(Color.Blue);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -143,8 +150,6 @@ namespace Minecraft
             shader.UploadMat4("uView", ref Camera.viewMatrix);
             World.Render(shader);
 
-            //GL.Enable(EnableCap.Blend);
-            //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             texShader.Bind();
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
@@ -157,18 +162,29 @@ namespace Minecraft
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
+            GUI.OnKeyDown(e.Key, e.Modifiers);
         }
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
+            GUI.OnKeyUp(e.Key, e.Modifiers);
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (!mouseLocked)
+            if (!mouseLocked /*&& GUI.Scene == 0*/) {
                 LockMouse();
+                GUI.SetScene(0);
+            }
             else
                 Player.MouseDown(e.Button);
+
+            GUI.OnMouseDown(e.Button, e.Position);
+        }
+
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            GUI.OnMouseUp(e.Button, e.Position);
         }
 
         // Mouse

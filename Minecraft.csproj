@@ -90,10 +90,14 @@
   <ItemGroup>
     <Compile Include="BiomeAttribs.cs" />
     <Compile Include="BlockType.cs" />
-    <Compile Include="GUI.cs" />
+    <Compile Include="Graphics\UI\GUI.cs" />
+    <Compile Include="Graphics\IRenderObject.cs" />
+    <Compile Include="Graphics\UI\GUIElement.cs" />
+    <Compile Include="Graphics\UI\IGUIElement.cs" />
+    <Compile Include="Graphics\UI\UIImage.cs" />
     <Compile Include="Lode.cs" />
     <Compile Include="Math\Noise.cs" />
-    <Compile Include="Camera.cs" />
+    <Compile Include="Graphics\Camera.cs" />
     <Compile Include="Chunk.cs" />
     <Compile Include="Math\Flat2i.cs" />
     <Compile Include="Math\Vector2i.cs" />
@@ -101,12 +105,13 @@
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RenderObject.cs" />
-    <Compile Include="Shader.cs" />
-    <Compile Include="Texture.cs" />
+    <Compile Include="Graphics\RenderObject.cs" />
+    <Compile Include="Graphics\Shader.cs" />
+    <Compile Include="Graphics\Texture.cs" />
     <Compile Include="Util.cs" />
-    <Compile Include="Vertex.cs" />
-    <Compile Include="TexVertex.cs" />
+    <Compile Include="VertexTypes\Vertex2D.cs" />
+    <Compile Include="VertexTypes\Vertex.cs" />
+    <Compile Include="VertexTypes\TexVertex.cs" />
     <Compile Include="VoxelData.cs" />
     <Compile Include="Window.cs" />
     <Compile Include="World.cs" />

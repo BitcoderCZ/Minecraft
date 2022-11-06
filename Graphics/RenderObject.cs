@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using Minecraft.VertexTypes;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using System;
 using System.Collections.Generic;
@@ -6,15 +7,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Minecraft
+namespace Minecraft.Graphics
 {
-    public class RenderObject
+    public class RenderObject : IRenderObject
     {
-        public Vector3 Position;
+        public Vector3 Position { get; set; }
 
         public TexVertex[] vertices;
         public uint[] triangles;
-        public bool Active;
+        public bool Active { get; set; }
 
         private int textureID;
 
@@ -46,7 +47,7 @@ namespace Minecraft
             GL.VertexArrayElementBuffer(vao, ebo);
 
             int vertexBindingPoint = 0;
-            GL.NamedBufferData(vbo, vertices.Length * Vertex.Size, vertices, BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(vbo, vertices.Length * TexVertex.Size, vertices, BufferUsageHint.DynamicDraw);
             GL.VertexArrayVertexBuffer(vao, vertexBindingPoint, vbo, IntPtr.Zero, TexVertex.Size);
 
             // pos

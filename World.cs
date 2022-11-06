@@ -1,4 +1,5 @@
-﻿using Minecraft.Math;
+﻿using Minecraft.Graphics;
+using Minecraft.Math;
 using OpenTK;
 using System;
 using System.Collections;
@@ -85,8 +86,8 @@ namespace Minecraft
                 for (int z = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; z < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
-                        chunks[x, z] = new Chunk(pos, false);
-                        chunksToCreate.Add(pos);
+                        chunks[x, z] = new Chunk(pos, true);
+                       // chunksToCreate.Add(pos);
                         activeChunks.Add(pos);
                     }
                 }
