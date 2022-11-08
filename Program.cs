@@ -13,7 +13,18 @@ namespace Minecraft
 
         static void Main(string[] args)
         {
+            Console.WriteLine($"Main directory: {Environment.CurrentDirectory}/");
             Window = new Window();
+            string version;
+            try { version = OpenGLHelper.GetVersion(); } catch { version = "Failed to get version"; }
+            Console.WriteLine($"OpenGL version: {version}");
+            if (int.TryParse(version.Split(' ')[0].Split('.')[0], out int mainVer))
+                if (mainVer < 4) {
+                    Console.WriteLine("OpenGL version to low. Press any key to exit...");
+                    Console.ReadKey(true);
+                    Environment.Exit(2);
+                }
+
             Window.Run(60d);
         }
     }
