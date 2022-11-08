@@ -38,7 +38,7 @@ namespace Minecraft
 
         private static float checkIncrement = 0.05f;
         private static float reach = 8f;
-        private static uint selectedBlock = 1;
+        public static uint selectedBlock = 1;
 
         private static RenderObject highlightblock;
         private static Vector3 placeBlock;
@@ -164,26 +164,13 @@ namespace Minecraft
                 Vector3i block = (Vector3i)highlightblock.Position;
                 block += Vector3i.One;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(block, 0, true);
-            } else if (button == MouseButton.Right && placeBlock != -Vector3.One) {
+            } else if (button == MouseButton.Right && placeBlock != -Vector3.One && selectedBlock != 0) {
                 Vector3 block = placeBlock;
                 Vector3i v = new Vector3i(MathPlus.RoundToInt(block.X), MathPlus.RoundToInt(block.Y), MathPlus.RoundToInt(block.Z));
                 if (v.Y >= VoxelData.ChunkHeight || v == (Vector3i)Position || v == (Vector3i)Position + new Vector3i(0, 1, 0))
                     return;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(v, selectedBlock, true);
             }
-        }
-
-        public static void MouseScrool(int scrool)
-        {
-            if (scrool > 0)
-                selectedBlock++;
-            else
-                selectedBlock--;
-
-            if (selectedBlock >= World.blocktypes.Length)
-                selectedBlock = 1;
-            else if (selectedBlock < 1)
-                selectedBlock = (uint)World.blocktypes.Length - 1;
         }
 
         private static void PlaceCursorBlock()
@@ -213,19 +200,34 @@ namespace Minecraft
 
         private static float CheckDownSpeed(float downSpeed)
         {
-            if (World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) ||
-                World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) ||
-                World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) ||
-                World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth)) {
+            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z + playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z + playerWidth)) ||
+                World.CheckForBlock(Position.X, Position.Y + downSpeed, Position.Z)) {
                 isGrounded = true;
                 verticalMomentum = verticalMomentum / 2f;
                 return 0f;
-            } else {
+            }
+            else {
                 isGrounded = false;
                 return downSpeed;
             }
         }
         private static float CheckUpSpeed(float upSpeed)
+        {
+            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z + playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z + playerWidth))) {
+                verticalMomentum = -0.0000001f;
+                return 0f;
+            }
+            else {
+                return upSpeed;
+            }
+        }
+        /*private static float CheckUpSpeed(float upSpeed)
         {
             if (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
                 World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
@@ -237,7 +239,7 @@ namespace Minecraft
             else {
                 return upSpeed;
             }
-        }
+        }*/
 
         public static bool front
         {

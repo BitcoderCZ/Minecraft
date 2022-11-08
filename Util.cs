@@ -1,4 +1,6 @@
-﻿using Minecraft.VertexTypes;
+﻿using Minecraft.Math;
+using Minecraft.VertexTypes;
+using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,9 @@ namespace Minecraft
     public static class Util
     {
         public const float PI = (float)System.Math.PI;
+
+        public static float Width = 1280f;
+        public static float Height = 720f;
 
         public static void CreateCube(float scale, out TexVertex[] verts, out uint[] tris)
         {
@@ -34,5 +39,24 @@ namespace Minecraft
                 triIndex += 6;
             }
         }
+
+        public static Vector2 NormalToGL(float x, float y)
+            => new Vector2((x * 2f) - 1f, (y * 2f) - 1f);
+        public static Vector2 NormalToGL(Vector2 pos)
+            => NormalToGL(pos.X, pos.Y);
+
+        public static Vector2 GLToNormal(float x, float y)
+            => new Vector2((x + 1f) / 2f, (y + 1f) / 2f);
+        public static Vector2 GLToNormal(Vector2 pos)
+            => GLToNormal(pos.X, pos.Y);
+
+        public static Vector2 PixelToNormal(int x, int y)
+            => new Vector2((float)x / Width, (float)y / Height);
+        public static Vector2 PixelToNormal(Vector2i pos)
+            => PixelToNormal(pos.X, pos.Y);
+        public static Vector2 PixelToGL(int x, int y)
+            => new Vector2(((float)x / Width) * 2f - 1f, ((float)y / Height) * 2f - 1f);
+        public static Vector2 PixelToGL(Vector2i pos)
+            => PixelToGL(pos.X, pos.Y);
     }
 }

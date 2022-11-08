@@ -20,13 +20,14 @@ namespace Minecraft.Graphics
         public static int uiid;
 
         public static readonly int[] textures = new int[2];
+        public static int[] items;
 
         public int id;
         public int Width;
         public int Height;
 
-        private static readonly string texPath = Environment.CurrentDirectory + "/Data/Textures/Blocks/";
-        private static readonly string uiPath = Environment.CurrentDirectory + "/Data/Textures/UI/";
+        private static readonly string blockPath = Environment.CurrentDirectory + "/Data/Textures/Blocks/";
+        private static readonly string itemPath = Environment.CurrentDirectory + "/Data/Textures/Items/";
 
         private static readonly TextureInfo[] blockTextures = new TextureInfo[]
         {
@@ -46,6 +47,58 @@ namespace Minecraft.Graphics
             new TextureInfo("andesite"), // 14
             new TextureInfo("polished_andesite"), // 15
         };
+        private static readonly ItemTextureInfo[] itemTextures = new ItemTextureInfo[]
+        {
+            new ItemTextureInfo("stone", LF.Items),
+            new ItemTextureInfo("grass_block", LF.Items),
+            new ItemTextureInfo("dirt", LF.Items),
+            new ItemTextureInfo("cobblestone", LF.Items),
+            new ItemTextureInfo("oak_planks", LF.Items),
+            new ItemTextureInfo("oak_sapling", LF.Blocks),
+            new ItemTextureInfo("bedrock", LF.Items),
+            new ItemTextureInfo("sand", LF.Items),
+            new ItemTextureInfo("granite", LF.Items),
+        };
+
+        public static void LoadItems()
+        {
+            items = new int[itemTextures.Length + 1];
+            items[0] = -1;
+
+            DirectBitmap bm;
+            for (int i = 0; i < itemTextures.Length; i++) {
+                string path = (itemTextures[i].loadFrom == LF.Blocks ? blockPath : itemPath) + itemTextures[i].name + ".png";
+                if (!File.Exists(path)) {
+                    Console.WriteLine($"Block texture {itemTextures[i].name}, wasn't found. skipped.");
+                    continue;
+                }
+
+                bm = DirectBitmap.Load(path, false);
+
+                if (itemTextures[i].flip != TexFlip.None) {
+                    if ((itemTextures[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
+                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                    if ((itemTextures[i].flip & TexFlip.Horizontal) == TexFlip.Horizontal)
+                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                }
+
+                if (itemTextures[i].colorFilter != Vector3.One) {
+                    Vector3 filter = itemTextures[i].colorFilter;
+                    for (int x = 0; x < bm.Width; x++)
+                        for (int y = 0; y < bm.Height; y++) {
+                            Color c = bm.GetPixel(x, y);
+                            float r = (float)(c.R / 255f) * filter.X;
+                            float g = (float)(c.G / 255f) * filter.Y;
+                            float b = (float)(c.B / 255f) * filter.Z;
+                            bm.SetPixel(x, y, Color.FromArgb(255, (byte)(r * 255f), (byte)(g * 255f), (byte)(b * 255f)));
+                        }
+                }
+
+                items[i + 1] = new Texture(bm.Data, bm.Width, bm.Height, TextureWrapMode.Repeat).id;
+
+                bm.Dispose();
+            }
+        }
 
         public static void CreateBlockTA()
         {
@@ -53,7 +106,7 @@ namespace Minecraft.Graphics
             GL.GenTextures(1, out taid);
             GL.BindTexture(TextureTarget.Texture2DArray, taid);
 
-            //GL.PixelStore(PixelStoreParameter.UnpackRowLength, 16/*width*/);
+            //GL.PixelStore(PixelStoreParameter.UnpackRowLength, 16/*width*/); NO!!!
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2DArray);
@@ -70,12 +123,12 @@ namespace Minecraft.Graphics
 
             Console.WriteLine("TEXTURE:BLOCKARRAY:GENERATE:BLOCK:START");
             for (int i = 0; i < blockTextures.Length; i++) {
-                if (!File.Exists(texPath + blockTextures[i].name + ".png")) {
+                if (!File.Exists(blockPath + blockTextures[i].name + ".png")) {
                     Console.WriteLine($"Block texture {blockTextures[i].name}, wasn't found. skipped.");
                     continue;
                 }
 
-                bm = new Bitmap(texPath + blockTextures[i].name + ".png");
+                bm = new Bitmap(blockPath + blockTextures[i].name + ".png");
 
                 if (blockTextures[i].flip != TexFlip.None) {
                     if ((blockTextures[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
@@ -229,11 +282,45 @@ namespace Minecraft.Graphics
         { }
     }
 
+    public struct ItemTextureInfo
+    {
+        public string name;
+        public TexFlip flip;
+        public LF loadFrom;
+        public Vector3 colorFilter;
+
+        public ItemTextureInfo(string _name, TexFlip _flip, LF _loadFrom, Vector3 _colorFilter)
+        {
+            name = _name;
+            flip = _flip;
+            loadFrom = _loadFrom;
+            colorFilter = _colorFilter;
+        }
+
+        public ItemTextureInfo(string _name, TexFlip _flip) : this(_name, _flip, LF.Items, Vector3.One)
+        { }
+
+        public ItemTextureInfo(string _name, Vector3 _colorFilter) : this(_name, TexFlip.None, LF.Items, _colorFilter)
+        { }
+
+        public ItemTextureInfo(string _name) : this(_name, TexFlip.None, LF.Items, Vector3.One)
+        { }
+
+        public ItemTextureInfo(string _name, LF _loadFrom) : this(_name, TexFlip.None, _loadFrom, Vector3.One)
+        { }
+    }
+
     [Flags]
     public enum TexFlip : byte
     {
         None = 0b0000_0000,
         Vertical = 0b0000_0001,
         Horizontal = 0b_0000_0010,
+    }
+
+    public enum LF : byte
+    {
+        Blocks = 0,
+        Items = 1,
     }
 }

@@ -11,24 +11,24 @@ namespace Minecraft.VertexTypes
     [StructLayout(LayoutKind.Sequential)]
     public struct Vertex2D
     {
-        public const int Size = 4 * sizeof(float);
+        public const int Size = 5 * sizeof(float);
 
-        public Vector2 position;
+        public Vector3 position;
         public Vector2 uv;
 
-        public Vertex2D(Vector2 _pos, Vector2 _uv)
+        public Vertex2D(Vector3 _pos, Vector2 _uv)
         {
             position = _pos;
             uv = _uv;
         }
 
-        public Vertex2D(float x, float y, float u, float v)
+        public Vertex2D(float x, float y, float z, float u, float v)
         {
-            position = new Vector2(x, y);
+            position = new Vector3(x, y, z);
             uv = new Vector2(u, v);
         }
 
-        public Vertex2D(float x, float y) : this(x, y, 0f, 0f)
+        public Vertex2D(float x, float y, float z) : this(x, y, z, 0f, 0f)
         { }
     }
 }

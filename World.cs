@@ -15,21 +15,21 @@ namespace Minecraft
     {
         public static readonly BlockType[] blocktypes = new BlockType[]
         {
-            new BlockType("air", false, 0), // 0
-            new BlockType("stone", true, 1), // 1
-            new BlockType("grass_block", true, 3, 3, 2, 4, 3, 3), // 2
-            new BlockType("dirt", true, 4), // 3
-            new BlockType("cobblestone", true, 5), // 4
-            new BlockType("oak_planks", true, 6), // 5
-            new BlockType("oak_sapling", false, 7), // 6
-            new BlockType("bedrock", true, 8), // 7
-            new BlockType("sand", true, 9), // 8
-            new BlockType("granite", true, 10), // 9
-            new BlockType("polished_granite", true, 11), // 10
-            new BlockType("diorite", true, 12), // 11
-            new BlockType("polished_diorite", true, 13), // 12
-            new BlockType("andesite", true, 14), // 13
-            new BlockType("polished_andesite", true, 15), // 14
+            new BlockType("air", false, 0, -1), // 0
+            new BlockType("stone", true, 1, 0), // 1
+            new BlockType("grass_block", true, 3, 3, 2, 4, 3, 3, 1), // 2
+            new BlockType("dirt", true, 4, 2), // 3
+            new BlockType("cobblestone", true, 5, 3), // 4
+            new BlockType("oak_planks", true, 6, 4), // 5
+            new BlockType("oak_sapling", false, 7, 5), // 6
+            new BlockType("bedrock", true, 8, 6), // 7
+            new BlockType("sand", true, 9, 7), // 8
+            new BlockType("granite", true, 10, 8), // 9
+            new BlockType("polished_granite", true, 11, -1), // 10
+            new BlockType("diorite", true, 12, -1), // 11
+            new BlockType("polished_diorite", true, 13, -1), // 12
+            new BlockType("andesite", true, 14, -1), // 13
+            new BlockType("polished_andesite", true, 15, -1), // 14
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {

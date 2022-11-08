@@ -52,11 +52,11 @@ namespace Minecraft.Graphics.UI
             GL.VertexArrayVertexBuffer(vao, vertexBindingPoint, vbo, IntPtr.Zero, Vertex2D.Size);
 
             // pos
-            GL.VertexArrayAttribFormat(vao, 0, 2, VertexAttribType.Float, false, 0);
+            GL.VertexArrayAttribFormat(vao, 0, 3, VertexAttribType.Float, false, 0);
             GL.VertexArrayAttribBinding(vao, 0, vertexBindingPoint);
             GL.EnableVertexArrayAttrib(vao, 0);
             // uv
-            GL.VertexArrayAttribFormat(vao, 1, 2, VertexAttribType.Float, false, 2 * sizeof(float));
+            GL.VertexArrayAttribFormat(vao, 1, 2, VertexAttribType.Float, false, 3 * sizeof(float));
             GL.VertexArrayAttribBinding(vao, 1, vertexBindingPoint);
             GL.EnableVertexArrayAttrib(vao, 1);
         }

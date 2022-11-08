@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using Minecraft.Math;
+using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
 using System;
@@ -15,6 +16,13 @@ namespace Minecraft.Graphics.UI
 {
     public static class GUI
     {
+        public static Vector2i slotSize;
+        public static Vector2i iteminslotSize;
+        public static Vector2i iteminslotOffset;
+        public static Vector2i backSize;
+        public static Vector2i backPos;
+
+
         public static int Scene { get; private set; }
 
         public static List<IGUIElement> elements;
@@ -23,30 +31,31 @@ namespace Minecraft.Graphics.UI
         private static readonly TextureInfo[] texturesToLoad = new TextureInfo[]
         {
             new TextureInfo("Crosshair"),
+            new TextureInfo("ItemSlotBG"),
+            new TextureInfo("ToolbarHighlight"),
         };
         public static readonly Dictionary<string, int> Textures = new Dictionary<string, int>();
 
-        private static IGUIElement[][] Scenes;
+        private static List<IGUIElement>[] Scenes;
 
         public static void Init()
         {
             elements = new List<IGUIElement>();
 
             DirectBitmap bm;
-            BitmapData data;
             for (int i = 0; i < texturesToLoad.Length; i++) {
                 if (!File.Exists(texPath + texturesToLoad[i].name + ".png")) {
                     Console.WriteLine($"Block texture {texturesToLoad[i].name}, wasn't found. skipped.");
                     continue;
                 }
 
-                bm = DirectBitmap.Load(texPath + texturesToLoad[i].name + ".png", false);//new Bitmap(texPath + texturesToLoad[i].name + ".png");
+                bm = DirectBitmap.Load(texPath + texturesToLoad[i].name + ".png", false);
 
-                /*if (texturesToLoad[i].flip != TexFlip.None) {
+                if (texturesToLoad[i].flip != TexFlip.None) {
                     if ((texturesToLoad[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
-                        bm.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
                     if ((texturesToLoad[i].flip & TexFlip.Horizontal) == TexFlip.Horizontal)
-                        bm.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
                 }
 
                 if (texturesToLoad[i].colorFilter != Vector3.One) {
@@ -59,34 +68,60 @@ namespace Minecraft.Graphics.UI
                             float b = (float)(c.B / 255f) * filter.Z;
                             bm.SetPixel(x, y, Color.FromArgb(255, (byte)(r * 255f), (byte)(g * 255f), (byte)(b * 255f)));
                         }
-                }*/
+                }
 
-                //data = bm.Bitmap.LockBits(new Rectangle(0, 0, bm.Width, bm.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                
-                Textures.Add(texturesToLoad[i].name, new Texture(/*data*/bm.Data, bm.Width, bm.Height, TextureWrapMode.Repeat).id);
+                Textures.Add(texturesToLoad[i].name, new Texture(bm.Data, bm.Width, bm.Height, TextureWrapMode.Repeat).id);
 
-                //bm.Bitmap.UnlockBits(data);
                 bm.Dispose();
             }
 
             DirectBitmap db = new DirectBitmap(1, 1);
             db.Clear(Color.FromArgb(255 / 3, 0, 0, 0));
-
             Textures.Add("BlackTransparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
-
             db.Dispose();
 
-            Scenes = new IGUIElement[][]
+            db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(0, 0, 0, 0));
+            Textures.Add("Transparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
+
+            Scenes = new List<IGUIElement>[]
             {
-                new IGUIElement[] { UIImage.CreateCenter(0.06f, 0.06f, Textures["Crosshair"], true)/*new UIImage(-0.1f / Program.Window.AspectRatio, -0.1f, 0.2f / Program.Window.AspectRatio, 0.2f, Textures["Crosshair"])*/ }, // In Game
-                new IGUIElement[] { new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"]), }, // Pause menu
+                new List<IGUIElement> {
+                    UIImage.CreateCenter(0.06f, 0.06f, Textures["Crosshair"], true),
+                    
+                }, // In Game
+                new List<IGUIElement> { new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false), }, // Pause menu
             };
+
+            float scale = 2.5f;
+            int numbSlots = 9;
+            slotSize = (Vector2i)(new Vector2(24, 24) * scale);
+            iteminslotSize = (Vector2i)(new Vector2(16, 16) * scale);
+            iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
+            backSize = new Vector2i(4 + numbSlots * slotSize.X, slotSize.Y + 4);
+            backPos = new Vector2i((int)Util.Width / 2 - backSize.X / 2, 20);
+
+            //Scenes[0].Add(UIImage.CreatePixel(backPos, backSize, Textures["BlackTransparent"], 3f));
+            UIImage[] icons = new UIImage[numbSlots];
+            for (int i = 0; i < numbSlots; i++) {
+                Scenes[0].Add(UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2), slotSize, Textures["ItemSlotBG"], 0.5f));
+                UIImage icon = UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X + iteminslotOffset.X, backPos.Y + 2 + iteminslotOffset.Y),
+                    iteminslotSize, Textures["Transparent"]/*Texture.items[0]*/, 0.6f);
+                icons[i] = icon;
+                Scenes[0].Add(icon);
+            }
+
+            UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) * scale), Textures["ToolbarHighlight"]);
+            Scenes[0].Add(highlight);
+
+            Toolbar.Init(highlight, icons);
         }
 
         public static void SetScene(int id)
         {
             elements.Clear();
-            for (int i = 0; i < Scenes[id].Length; i++)
+            for (int i = 0; i < Scenes[id].Count; i++)
                 elements.Add(Scenes[id][i]);
             Scene = id;
         }

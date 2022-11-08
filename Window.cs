@@ -53,7 +53,6 @@ namespace Minecraft
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             shader = new Shader();
             shader.Compile("shader");
@@ -63,6 +62,7 @@ namespace Minecraft
             texShader.Compile("tex");
 
             Texture.CreateBlockTA();
+            Texture.LoadItems();
             GUI.Init();
             GUI.SetScene(0); // Game
 
@@ -142,18 +142,22 @@ namespace Minecraft
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             GL.ClearColor(Color.Blue);
+            GL.DepthMask(true);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             shader.Bind();
             Camera.UpdateView(Width, Height);
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             World.Render(shader);
 
             texShader.Bind();
             shader.UploadMat4("uProjection", ref Camera.projMatrix);
             shader.UploadMat4("uView", ref Camera.viewMatrix);
             Player.Render(texShader);
+            GL.DepthMask(false);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GUI.Render(uiShader);
             
             SwapBuffers();
@@ -210,7 +214,7 @@ namespace Minecraft
 
         protected override void OnMouseWheel(MouseWheelEventArgs e)
         {
-            Player.MouseScrool(e.Delta);
+            Toolbar.MouseScrool(e.Delta);
         }
 
         protected override void OnClosed(EventArgs e)
