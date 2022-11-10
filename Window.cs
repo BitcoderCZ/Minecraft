@@ -13,6 +13,7 @@ using Minecraft.Math;
 using System.ComponentModel;
 using Minecraft.Graphics;
 using Minecraft.Graphics.UI;
+using System.Threading;
 
 namespace Minecraft
 {
@@ -25,6 +26,7 @@ namespace Minecraft
         Shader shader;
         Shader texShader;
         Shader uiShader;
+        Font font;
         public KeyboardState keyboardState;
 
         // Mouse
@@ -63,10 +65,16 @@ namespace Minecraft
 
             Texture.CreateBlockTA();
             Texture.LoadItems();
-            GUI.Init();
-            GUI.SetScene(0); // Game
+            font = new Font("Minecraft", 32);
+            GUI.Init(font);
 
-            World.Generate();
+            GUI.SetScene(2); // Loading
+
+            Thread worldGenThread = new Thread(new ThreadStart(() =>
+            {
+                World.Generate();
+            }));
+            worldGenThread.Start();
 
             base.WindowBorder = WindowBorder.Fixed;
             base.WindowState = WindowState.Normal;
@@ -95,36 +103,41 @@ namespace Minecraft
         {
             float delta = (float)e.Time;
 
-            // Rotation
-            if (keyboardState.IsKeyDown(Key.Left))
-                Player.Rotation.Y += delta * 160f;
-            else if (keyboardState.IsKeyDown(Key.Right))
-                Player.Rotation.Y -= delta * 160f;
-            if (keyboardState.IsKeyDown(Key.Up))
-                Player.Rotation.X -= delta * 80f;
-            else if (keyboardState.IsKeyDown(Key.Down))
-                Player.Rotation.X += delta * 80f;
+            if (GUI.Scene == 0) {
+                // Rotation
+                if (keyboardState.IsKeyDown(Key.Left))
+                    Player.Rotation.Y += delta * 160f;
+                else if (keyboardState.IsKeyDown(Key.Right))
+                    Player.Rotation.Y -= delta * 160f;
+                if (keyboardState.IsKeyDown(Key.Up))
+                    Player.Rotation.X -= delta * 80f;
+                else if (keyboardState.IsKeyDown(Key.Down))
+                    Player.Rotation.X += delta * 80f;
 
-            if (mouseLocked) {
-                Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
-                if (mouseDelta != Point.Empty) {
-                    Player.Rotation.X += mouseDelta.Y * 0.25f;
-                    Player.Rotation.Y += -mouseDelta.X * 0.25f;
-                    CenterCursor();
+                if (mouseLocked) {
+                    Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
+                    if (mouseDelta != Point.Empty) {
+                        Player.Rotation.X += mouseDelta.Y * 0.25f;
+                        Player.Rotation.Y += -mouseDelta.X * 0.25f;
+                        CenterCursor();
+                    }
                 }
+
+                if (Player.Rotation.X < -89)
+                    Player.Rotation.X = -89;
+                else if (Player.Rotation.X > 89)
+                    Player.Rotation.X = 89;
+
+                Player.Update(keyboardState, delta);
+
+                World.Update();
             }
-
-            if (Player.Rotation.X < -89)
-                Player.Rotation.X = -89;
-            else if (Player.Rotation.X > 89)
-                Player.Rotation.X = 89;
-
-            Player.Update(keyboardState, delta);
 
             // Other keyboard
             if (keyboardState.IsKeyDown(Key.Escape)) {
                 UnlockMouse();
-                GUI.SetScene(1);
+                if (GUI.Scene == 0)
+                    GUI.SetScene(1);
             }
 
             float FPS = 1f / delta;
@@ -136,7 +149,6 @@ namespace Minecraft
                 Title = $"Minecraft FPS: {SystemPlus.MathPlus.Round(FPS, 2)}";
             }
 
-            World.Update();
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -145,17 +157,20 @@ namespace Minecraft
             GL.DepthMask(true);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            shader.Bind();
-            Camera.UpdateView(Width, Height);
-            shader.UploadMat4("uProjection", ref Camera.projMatrix);
-            shader.UploadMat4("uView", ref Camera.viewMatrix);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
-            World.Render(shader);
+            if (GUI.Scene != 2) {
+                shader.Bind();
+                Camera.UpdateView(Width, Height);
+                shader.UploadMat4("uProjection", ref Camera.projMatrix);
+                shader.UploadMat4("uView", ref Camera.viewMatrix);
+                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+                World.Render(shader);
 
-            texShader.Bind();
-            shader.UploadMat4("uProjection", ref Camera.projMatrix);
-            shader.UploadMat4("uView", ref Camera.viewMatrix);
-            Player.Render(texShader);
+                texShader.Bind();
+                texShader.UploadMat4("uProjection", ref Camera.projMatrix);
+                texShader.UploadMat4("uView", ref Camera.viewMatrix);
+                Player.Render(texShader);
+            }
+
             GL.DepthMask(false);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GUI.Render(uiShader);
@@ -176,11 +191,12 @@ namespace Minecraft
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (!mouseLocked /*&& GUI.Scene == 0*/) {
+            if (!mouseLocked) {
                 LockMouse();
-                GUI.SetScene(0);
+                if (GUI.Scene == 1)
+                    GUI.SetScene(0);
             }
-            else
+            else if (GUI.Scene == 0)
                 Player.MouseDown(e.Button);
 
             GUI.OnMouseDown(e.Button, e.Position);

@@ -46,6 +46,8 @@ namespace Minecraft.Graphics
             new TextureInfo("polished_diorite"), // 13
             new TextureInfo("andesite"), // 14
             new TextureInfo("polished_andesite"), // 15
+            new TextureInfo("oak_log"), // 16
+            new TextureInfo("oak_leaves", new Vector3(0.65f, 1f, 0.2f)), // 17
         };
         private static readonly ItemTextureInfo[] itemTextures = new ItemTextureInfo[]
         {

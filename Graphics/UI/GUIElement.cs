@@ -14,8 +14,8 @@ namespace Minecraft.Graphics.UI
     {
         public Vector3 Position { get; set; }
 
-        public float Width { get; protected set; }
-        public float Height { get; protected set; }
+        public float Width { get; set; }
+        public float Height { get; set; }
 
         public bool Active { get; set; }
 

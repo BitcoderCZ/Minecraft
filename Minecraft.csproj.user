@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <PublishUrlHistory />
-    <InstallUrlHistory />
+    <PublishUrlHistory>E:\Program Files\VisualStudioProjects\Website\bin\x64\Debug\Data\Minecraft\|E:\Releses\Minecraft\</PublishUrlHistory>
+    <InstallUrlHistory>http://bitcoder.cz.eu.org:1234/Minecraft/|http://bitcoder.cz.eu.org:1234/</InstallUrlHistory>
     <SupportUrlHistory />
-    <UpdateUrlHistory />
+    <UpdateUrlHistory>http://bitcoder.cz.eu.org:1234/Minecraft/</UpdateUrlHistory>
     <BootstrapperUrlHistory />
     <ErrorReportUrlHistory />
     <FallbackCulture>en-US</FallbackCulture>
-    <VerifyUploadedFiles>false</VerifyUploadedFiles>
+    <VerifyUploadedFiles>true</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup>
     <EnableSecurityDebugging>false</EnableSecurityDebugging>

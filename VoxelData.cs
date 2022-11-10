@@ -17,7 +17,7 @@ namespace Minecraft
 
 		public const int WorldSizeInBlocks = ChunkWidth * WorldSizeInChunks;
 
-		public const int RenderDistance = 2;
+		public const int RenderDistance = 4;
 
 		public static readonly Vector3[] voxelVerts = new Vector3[8] {
 			new Vector3(0.0f, 0.0f, 0.0f),

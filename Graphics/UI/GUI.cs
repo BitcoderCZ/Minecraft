@@ -33,12 +33,13 @@ namespace Minecraft.Graphics.UI
             new TextureInfo("Crosshair"),
             new TextureInfo("ItemSlotBG"),
             new TextureInfo("ToolbarHighlight"),
+            new TextureInfo("options_background"),
         };
         public static readonly Dictionary<string, int> Textures = new Dictionary<string, int>();
 
-        private static List<IGUIElement>[] Scenes;
+        public static List<IGUIElement>[] Scenes;
 
-        public static void Init()
+        public static void Init(Font font)
         {
             elements = new List<IGUIElement>();
 
@@ -75,15 +76,7 @@ namespace Minecraft.Graphics.UI
                 bm.Dispose();
             }
 
-            DirectBitmap db = new DirectBitmap(1, 1);
-            db.Clear(Color.FromArgb(255 / 3, 0, 0, 0));
-            Textures.Add("BlackTransparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
-            db.Dispose();
-
-            db = new DirectBitmap(1, 1);
-            db.Clear(Color.FromArgb(0, 0, 0, 0));
-            Textures.Add("Transparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
-            db.Dispose();
+            LoadColorTextures();
 
             Scenes = new List<IGUIElement>[]
             {
@@ -92,6 +85,12 @@ namespace Minecraft.Graphics.UI
                     
                 }, // In Game
                 new List<IGUIElement> { new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false), }, // Pause menu
+                new List<IGUIElement> { 
+                    UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
+                    UIImage.CreatePixel(new Vector2i(230, 230), new Vector2i(820, 60), Textures["Black"]), // loading bar
+                    UIImage.CreatePixel(new Vector2i(240, 240), new Vector2i(1, 40), Textures["Green"]), // loading bar
+                    UItext.CreateCenter("Loading...", 0, 50, 5f, font),
+                } // Loading
             };
 
             float scale = 2.5f;
@@ -102,12 +101,11 @@ namespace Minecraft.Graphics.UI
             backSize = new Vector2i(4 + numbSlots * slotSize.X, slotSize.Y + 4);
             backPos = new Vector2i((int)Util.Width / 2 - backSize.X / 2, 20);
 
-            //Scenes[0].Add(UIImage.CreatePixel(backPos, backSize, Textures["BlackTransparent"], 3f));
             UIImage[] icons = new UIImage[numbSlots];
             for (int i = 0; i < numbSlots; i++) {
                 Scenes[0].Add(UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2), slotSize, Textures["ItemSlotBG"], 0.5f));
                 UIImage icon = UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X + iteminslotOffset.X, backPos.Y + 2 + iteminslotOffset.Y),
-                    iteminslotSize, Textures["Transparent"]/*Texture.items[0]*/, 0.6f);
+                    iteminslotSize, Textures["Transparent"], 0.6f);
                 icons[i] = icon;
                 Scenes[0].Add(icon);
             }
@@ -116,6 +114,29 @@ namespace Minecraft.Graphics.UI
             Scenes[0].Add(highlight);
 
             Toolbar.Init(highlight, icons);
+        }
+
+        private static void LoadColorTextures()
+        {
+            DirectBitmap db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(255 / 3, 0, 0, 0));
+            Textures.Add("BlackTransparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
+
+            db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(255, 0, 0, 0));
+            Textures.Add("Black", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
+
+            db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(0, 0, 0, 0));
+            Textures.Add("Transparent", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
+
+            db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(255, 0, 255, 0));
+            Textures.Add("Green", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
         }
 
         public static void SetScene(int id)
@@ -135,6 +156,8 @@ namespace Minecraft.Graphics.UI
 
         public static void Render(Shader uiShader)
         {
+            if (Scene == 2)
+                (elements[2] as UIImage).UpdateVerts();
             uiShader.Bind();
             for (int i = 0; i < elements.Count; i++) {
                 elements[i].Render(uiShader);

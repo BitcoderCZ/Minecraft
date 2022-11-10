@@ -1,4 +1,5 @@
 ﻿using Minecraft.Graphics;
+using Minecraft.Graphics.UI;
 using Minecraft.Math;
 using OpenTK;
 using System;
@@ -45,15 +46,14 @@ namespace Minecraft
         public static Flat2i prevPlayerChunk;
 
         private static List<Flat2i> chunksToCreate = new List<Flat2i>();
-        private static bool isCreatingChunks;
-
-        private static TaskFactory factory;
 
         private static Thread createChunksThread;
 
+        public static bool Generated { get; private set; }
+
         static World()
         {
-            factory = new TaskFactory();
+            Generated = false;
             Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
             seed = (uint)r.Next();
             Noise.SetSeed(seed);
@@ -82,13 +82,22 @@ namespace Minecraft
         {
             Console.WriteLine("WORLD:GENERATE:START");
 
+            UIImage loadBar = (UIImage)GUI.elements[2];
+
+            float max = 800f;
+            float length = 0f;
+            float step = (1f / ((float)VoxelData.RenderDistance * (float)VoxelData.RenderDistance)) * max;
+            step /= 4f;
+
             for (int x = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; x < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; x++)
                 for (int z = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; z < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
                         chunks[x, z] = new Chunk(pos, true);
-                       // chunksToCreate.Add(pos);
                         activeChunks.Add(pos);
+
+                        length += step;
+                        loadBar.PixWidth = (int)length;
                     }
                 }
 
@@ -98,6 +107,10 @@ namespace Minecraft
             prevPlayerChunk = BlockToChunk(Player.Position);
 
             Console.WriteLine("WORLD:GENERATE:DONE");
+
+            Generated = true;
+
+            GUI.SetScene(0);
         }
 
         public static Flat2i BlockToChunk(Vector3i v)
