@@ -22,6 +22,8 @@ namespace Minecraft
 
         public readonly uint[] blocks;
 
+        public Queue<BlockMod> modifications = new Queue<BlockMod>();
+
         public Flat2i chunkPos;
         public Flat2i pos;
         public bool Active
@@ -47,8 +49,8 @@ namespace Minecraft
             CreatedMesh = 0;
             CreatedMeshArrays = false;
             chunkPos = _position;
-            pos = new Flat2i(chunkPos.X * VoxelData.ChunkWidth, chunkPos.Z * VoxelData.ChunkWidth);
-            blocks = new uint[VoxelData.ChunkLayerLength * VoxelData.ChunkHeight];
+            pos = new Flat2i(chunkPos.X * BlockData.ChunkWidth, chunkPos.Z * BlockData.ChunkWidth);
+            blocks = new uint[BlockData.ChunkLayerLength * BlockData.ChunkHeight];
 
             if (generate)
                 Init();
@@ -65,20 +67,27 @@ namespace Minecraft
             active = true;
         }
 
-        public void UpdateMesh()
+        public void UpdateMesh() // UpdateChunk
         {
+            while (modifications.Count > 0) {
+                BlockMod mod = modifications.Dequeue();
+                Vector3i _pos = mod.Pos - pos;
+                SetBlock(_pos, mod.Id, false);
+            }
+
             ClearMeshData();
             CreateMeshData();
             vertsA = vertices.ToArray();
             trigsA = triangles.ToArray();
-            CreatedMesh = 2;
+            if (CreatedMesh != 0)
+                CreatedMesh = 2;
         }
 
         private void GenerateBlocks()
         {
-            for (int x = 0; x < VoxelData.ChunkWidth; x++)
-                for (int z = 0; z < VoxelData.ChunkWidth; z++)
-                    for (int y = 0; y < VoxelData.ChunkHeight; y++) {
+            for (int x = 0; x < BlockData.ChunkWidth; x++)
+                for (int z = 0; z < BlockData.ChunkWidth; z++)
+                    for (int y = 0; y < BlockData.ChunkHeight; y++) {
                         SetBlock(x, y, z, World.GetGenBlock(new Vector3i(x, y, z) + pos), false);
                     }
 
@@ -87,9 +96,9 @@ namespace Minecraft
 
         public void CreateMeshData()
         {
-            for (int y = 0; y < VoxelData.ChunkHeight; y++)
-                for (int x = 0; x < VoxelData.ChunkWidth; x++)
-                    for (int z = 0; z < VoxelData.ChunkWidth; z++) {
+            for (int y = 0; y < BlockData.ChunkHeight; y++)
+                for (int x = 0; x < BlockData.ChunkWidth; x++)
+                    for (int z = 0; z < BlockData.ChunkWidth; z++) {
                         uint blockId = GetBlock(x, y, z);
                         if (blockId != 0)
                             AddVoxelDataToChunk(new Vector3i(x, y, z), blockId);
@@ -106,12 +115,12 @@ namespace Minecraft
         void AddVoxelDataToChunk(Vector3i pos, uint blockId)
         {
             for (int p = 0; p < 6; p++) {
-                if (!CheckBlock(pos + VoxelData.faceChecks[p])) {
+                if (!CheckBlock(pos + BlockData.faceChecks[p])) {
                     uint texId = World.blocktypes[blockId].GetTextureID(p);
-                    vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 0]], VoxelData.voxelUvs[0], texId));
-                    vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 1]], VoxelData.voxelUvs[1], texId));
-                    vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 2]], VoxelData.voxelUvs[2], texId));
-                    vertices.Add(new Vertex(pos + VoxelData.voxelVerts[VoxelData.voxelTris[p, 3]], VoxelData.voxelUvs[3], texId));
+                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 0]], BlockData.voxelUvs[0], texId));
+                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 1]], BlockData.voxelUvs[1], texId));
+                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 2]], BlockData.voxelUvs[2], texId));
+                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 3]], BlockData.voxelUvs[3], texId));
                     triangles.Add(vertexIndex);
                     triangles.Add(vertexIndex + 1);
                     triangles.Add(vertexIndex + 2);
@@ -179,7 +188,7 @@ namespace Minecraft
         {
             Vector3i thisBlock = new Vector3i(x, y, z);
             for (int p = 0; p < 6; p++) {
-                Vector3i currentBlock = thisBlock + VoxelData.faceChecks[p];
+                Vector3i currentBlock = thisBlock + BlockData.faceChecks[p];
                 if (!IsBlockInChunk(currentBlock)) {
                     World.GetChunkFromBlock(currentBlock + pos).UpdateMesh();
                 }
@@ -191,7 +200,7 @@ namespace Minecraft
             if (!IsBlockInChunk(X, Y, Z))
                 return;
 
-            blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)] = id;
+            blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)] = id;
 
             if (updateMesh) {
                 UpdateMesh();
@@ -206,7 +215,7 @@ namespace Minecraft
             if (!IsBlockInChunk(X, Y, Z))
                 return 0;
 
-            return blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)];
+            return blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)];
         }
         public uint GetBlock(Vector3i pos)
             => GetBlock(pos.X, pos.Y, pos.Z);
@@ -216,14 +225,14 @@ namespace Minecraft
             if (!IsBlockInChunk(X, Y, Z))
                 return World.CheckForBlock(X + pos.X, Y, Z + pos.Z);
 
-            return World.blocktypes[blocks[X + (Z * VoxelData.ChunkWidth) + (Y * VoxelData.ChunkLayerLength)]].isSolid;
+            return World.blocktypes[blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)]].isSolid;
         }
         public bool CheckBlock(Vector3i pos)
             => CheckBlock(pos.X, pos.Y, pos.Z);
 
         public bool IsBlockInChunk(int X, int Y, int Z)
         {
-            if (X < 0 || X >= VoxelData.ChunkWidth || Y < 0 || Y >= VoxelData.ChunkHeight || Z < 0 || Z >= VoxelData.ChunkWidth)
+            if (X < 0 || X >= BlockData.ChunkWidth || Y < 0 || Y >= BlockData.ChunkHeight || Z < 0 || Z >= BlockData.ChunkWidth)
                 return false;
             else
                 return true;

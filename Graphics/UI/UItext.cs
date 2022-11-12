@@ -34,7 +34,7 @@ namespace Minecraft.Graphics.UI
             Scale = scale;
             font = _font;
 
-            CreateMesh();
+            UpdateMesh();
 
             Active = true;
         }
@@ -44,39 +44,29 @@ namespace Minecraft.Graphics.UI
             if (!Active)
                 return;
 
-            for (int i = 0; i < chars.Length; i++) {
+            for (int i = 0; i < chars.Length; i++)
                 chars[i].Render(s);
-            }
-            /*int slot = 0;
-            GL.ActiveTexture(TextureUnit.Texture0 + slot);
-            GL.BindTexture(TextureTarget.Texture2D, textureID);
-            GL.Uniform1(6, slot);
-
-            GL.BindVertexArray(vao);
-            GL.DrawElements(BeginMode.Triangles, triangles.Length, DrawElementsType.UnsignedInt, 0);*/
         }
 
-        private void CreateMesh()
+        public void UpdateMesh()
         {
-            /*List<uint> tris = new List<uint>();
-            List<Vertex2D> verts = new List<Vertex2D>();*/
-
             float xOff = 0f;
+            float maxHeight = 0f;
 
-            for (int i = 0; i < Text.Length; i++) {
-                CreateCharMesh(/*ref tris, ref verts,*/ Text[i], i, ref xOff);
-            }
+            for (int i = 0; i < Text.Length; i++)
+                CreateCharMesh(Text[i], i, ref xOff, ref maxHeight);
 
-            /*triangles = tris.ToArray();
-            vertices = verts.ToArray();
-
-            InitMesh();*/
+            Width = xOff;
+            Height = maxHeight;
         }
 
-        private void CreateCharMesh(char ch, int i, ref float xOff)
+        private void CreateCharMesh(char ch, int i, ref float xOff, ref float maxHeight)
         {
             float width = (float)font.Sizes[ch].Width / Util.Width * Scale;
             float height = (float)font.Sizes[ch].Height / Util.Height * Scale;
+
+            if (height > maxHeight)
+                maxHeight = height;
 
             float yOff = 0f;
 
@@ -88,6 +78,23 @@ namespace Minecraft.Graphics.UI
             chars[i] = new UIImage(Position.X + xOff, Position.Y - yOff, width, height, font.Chars[ch], false);
 
             xOff += width;
+        }
+
+        public void SetPos(float x, float y)
+        {
+            Position = new Vector3(x, y, Position.Z);
+
+            float xOff = 0f;
+            for (int i = 0; i < Text.Length; i++) {
+                float yOff = 0f;
+                if (Text[i] == 'p' || Text[i] == 'q' || Text[i] == 'g' || Text[i] == 'y')
+                    yOff = 0.01f;
+                yOff *= Scale;
+
+                chars[i].Position = new Vector3(Position.X + xOff, Position.Y - yOff, chars[i].Position.Z);
+
+                xOff += (float)font.Sizes[Text[i]].Width / Util.Width * Scale;
+            }
         }
     }
 }

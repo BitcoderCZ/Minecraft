@@ -40,6 +40,8 @@ namespace Minecraft
             Height = 720;
             AspectRatio = (float)Width / (float)Height;
             Title = "Minecraft";
+
+            Icon = new Icon(Environment.CurrentDirectory + "/Data/icon.ico");
         }
 
         public DebugProc debMessageCallback;

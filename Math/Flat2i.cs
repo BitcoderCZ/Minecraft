@@ -22,9 +22,9 @@ namespace Minecraft.Math
         }
 
         public static Flat2i FromBlock(Vector3 pos)
-            => new Flat2i((int)pos.X / VoxelData.ChunkWidth, (int)pos.Z / VoxelData.ChunkWidth);
+            => new Flat2i((int)pos.X / BlockData.ChunkWidth, (int)pos.Z / BlockData.ChunkWidth);
         public static Flat2i FromBlock(Vector3i pos)
-            => new Flat2i(pos.X / VoxelData.ChunkWidth, pos.Z / VoxelData.ChunkWidth);
+            => new Flat2i(pos.X / BlockData.ChunkWidth, pos.Z / BlockData.ChunkWidth);
 
         public static Flat2i operator +(Flat2i a, Flat2i b)
             => new Flat2i(a.X + b.X, a.Z + b.Z);
@@ -53,6 +53,9 @@ namespace Minecraft.Math
             => new Vector2((float)a.X, (float)a.Z);
         public static explicit operator Flat2i(Vector2 a)
             => new Flat2i((int)a.X, (int)a.Y);
+
+        public static implicit operator Vector3i(Flat2i a)
+            => new Vector3i(a.X, 0, a.Z);
 
         public static bool operator ==(Flat2i a, Flat2i b)
             => a.X == b.X && a.Z == b.Z;

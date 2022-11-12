@@ -47,7 +47,8 @@ namespace Minecraft.Graphics
             new TextureInfo("andesite"), // 14
             new TextureInfo("polished_andesite"), // 15
             new TextureInfo("oak_log"), // 16
-            new TextureInfo("oak_leaves", new Vector3(0.65f, 1f, 0.2f)), // 17
+            new TextureInfo("oak_log_top"), // 17
+            new TextureInfo("oak_leaves", new Vector3(0.65f, 1f, 0.2f)), // 18
         };
         private static readonly ItemTextureInfo[] itemTextures = new ItemTextureInfo[]
         {
@@ -60,6 +61,8 @@ namespace Minecraft.Graphics
             new ItemTextureInfo("bedrock", LF.Items),
             new ItemTextureInfo("sand", LF.Items),
             new ItemTextureInfo("granite", LF.Items),
+            new ItemTextureInfo("oak_log", LF.Items),
+            new ItemTextureInfo("oak_leaves", LF.Items),
         };
 
         public static void LoadItems()

@@ -20,8 +20,8 @@ namespace Minecraft.Math
 
         public static float Get2DPerlinNoise(Vector2 pos, float offset, float scale)
         {
-            return noise.cnoise(new float2(((pos.X + 0.1f) / VoxelData.ChunkWidth + xOff) * scale + offset,
-                                            ((pos.Y + 0.1f) / VoxelData.ChunkWidth + yOff) * scale + offset));
+            return noise.cnoise(new float2(((pos.X + 0.1f) / BlockData.ChunkWidth + xOff) * scale + offset,
+                                            ((pos.Y + 0.1f) / BlockData.ChunkWidth + yOff) * scale + offset));
         }
 
         public static bool Get3DPerlin(Vector3 pos, float offset, float scale, float threshold)

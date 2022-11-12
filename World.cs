@@ -31,21 +31,28 @@ namespace Minecraft
             new BlockType("polished_diorite", true, 13, -1), // 12
             new BlockType("andesite", true, 14, -1), // 13
             new BlockType("polished_andesite", true, 15, -1), // 14
+            new BlockType("oak_log", true, 16, 16, 17, 17, 16, 16, 9), // 15
+            new BlockType("oak_leaves", true, 18, 10), // 16
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f,new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f),  new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
+            new BiomeAttribs("plains", 60, 14, 0.2f, 1.0f, 0.5f, 18f, 0.6f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
+                new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
                                 new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
         };
         public static uint seed;
 
         public static Vector3 spawnPos;
 
-        private static Chunk[,] chunks = new Chunk[VoxelData.WorldSizeInChunks, VoxelData.WorldSizeInChunks];
+        private static Chunk[,] chunks = new Chunk[BlockData.WorldSizeInChunks, BlockData.WorldSizeInChunks];
         private static List<Flat2i> activeChunks = new List<Flat2i>();
         public static Flat2i prevPlayerChunk;
 
         private static List<Flat2i> chunksToCreate = new List<Flat2i>();
+
+        private static Queue<Flat2i> chunksToUpdate = new Queue<Flat2i>();
+
+        private static Queue<BlockMod> modifications = new Queue<BlockMod>();
 
         private static Thread createChunksThread;
 
@@ -57,7 +64,7 @@ namespace Minecraft
             Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
             seed = (uint)r.Next();
             Noise.SetSeed(seed);
-            spawnPos = new Vector3(VoxelData.WorldSizeInBlocks / 2f, VoxelData.ChunkHeight + 2f, VoxelData.WorldSizeInBlocks / 2f);
+            spawnPos = new Vector3(BlockData.WorldSizeInBlocks / 2f, BlockData.ChunkHeight + 2f, BlockData.WorldSizeInBlocks / 2f);
             createChunksThread = new Thread(new ThreadStart(CreateChunks));
             createChunksThread.Start();
         }
@@ -74,6 +81,26 @@ namespace Minecraft
                 if (chunksToCreate.Count > 0) {
                     chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
                     chunksToCreate.RemoveAt(0);
+
+                    while (modifications.Count > 0) {
+                        BlockMod mod = modifications.Dequeue();
+                        Flat2i cp = BlockToChunk(mod.Pos);
+
+                        if (chunks[cp.X, cp.Z] == null) {
+                            chunks[cp.X, cp.Z] = new Chunk(cp, true);
+                            activeChunks.Add(cp);
+                        }
+
+                        chunks[cp.X, cp.Z].modifications.Enqueue(mod);
+
+                        if (!chunksToUpdate.Contains(cp))
+                            chunksToUpdate.Enqueue(cp);
+                    }
+
+                    while (chunksToUpdate.Count > 0) {
+                        Flat2i cp = chunksToUpdate.Dequeue();
+                        chunks[cp.X, cp.Z].UpdateMesh();
+                    }
                 }
             }
         }
@@ -86,11 +113,11 @@ namespace Minecraft
 
             float max = 800f;
             float length = 0f;
-            float step = (1f / ((float)VoxelData.RenderDistance * (float)VoxelData.RenderDistance)) * max;
+            float step = (1f / ((float)BlockData.RenderDistance * (float)BlockData.RenderDistance)) * max;
             step /= 4f;
 
-            for (int x = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; x < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; x++)
-                for (int z = VoxelData.WorldSizeInChunks / 2 - VoxelData.RenderDistance; z < VoxelData.WorldSizeInChunks / 2 + VoxelData.RenderDistance; z++) {
+            for (int x = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; x < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; x++)
+                for (int z = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
                         chunks[x, z] = new Chunk(pos, true);
@@ -100,6 +127,26 @@ namespace Minecraft
                         loadBar.PixWidth = (int)length;
                     }
                 }
+
+            while (modifications.Count > 0) {
+                BlockMod mod = modifications.Dequeue();
+                Flat2i cp = BlockToChunk(mod.Pos);
+
+                if (chunks[cp.X, cp.Z] == null) {
+                    chunks[cp.X, cp.Z] = new Chunk(cp, true);
+                    activeChunks.Add(cp);
+                }
+
+                chunks[cp.X, cp.Z].modifications.Enqueue(mod);
+
+                if (!chunksToUpdate.Contains(cp))
+                    chunksToUpdate.Enqueue(cp);
+            }
+
+            while (chunksToUpdate.Count > 0) {
+                Flat2i cp = chunksToUpdate.Dequeue();
+                chunks[cp.X, cp.Z].UpdateMesh();
+            }
 
             Player.Position = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
             Player.Position.Y = (int)(Noise.Get2DPerlinNoise(new Vector2(Player.Position.X, Player.Position.Z), 0f, biomes[0].terrainScale)
@@ -114,14 +161,14 @@ namespace Minecraft
         }
 
         public static Flat2i BlockToChunk(Vector3i v)
-            => new Flat2i(v.X / VoxelData.ChunkWidth, v.Z / VoxelData.ChunkWidth);
+            => new Flat2i(v.X / BlockData.ChunkWidth, v.Z / BlockData.ChunkWidth);
         public static Flat2i BlockToChunk(Vector3 v)
-            => new Flat2i((int)v.X / VoxelData.ChunkWidth, (int)v.Z / VoxelData.ChunkWidth);
+            => new Flat2i((int)v.X / BlockData.ChunkWidth, (int)v.Z / BlockData.ChunkWidth);
 
         public static Chunk GetChunkFromBlock(Vector3i v)
-            => chunks[v.X / VoxelData.ChunkWidth, v.Z / VoxelData.ChunkWidth];
+            => chunks[v.X / BlockData.ChunkWidth, v.Z / BlockData.ChunkWidth];
         public static Chunk GetChunkFromBlock(Vector3 v)
-            => chunks[(int)v.X / VoxelData.ChunkWidth, (int)v.Z / VoxelData.ChunkWidth];
+            => chunks[(int)v.X / BlockData.ChunkWidth, (int)v.Z / BlockData.ChunkWidth];
 
         private static void CheckViewDistance()
         {
@@ -131,8 +178,8 @@ namespace Minecraft
 
             List<Flat2i> prevActiveChunks = new List<Flat2i>(activeChunks);
 
-            for (int x = playerChunk.X - VoxelData.RenderDistance; x < playerChunk.X + VoxelData.RenderDistance; x++)
-                for (int z = playerChunk.Z - VoxelData.RenderDistance; z < playerChunk.Z + VoxelData.RenderDistance; z++) {
+            for (int x = playerChunk.X - BlockData.RenderDistance; x < playerChunk.X + BlockData.RenderDistance; x++)
+                for (int z = playerChunk.Z - BlockData.RenderDistance; z < playerChunk.Z + BlockData.RenderDistance; z++) {
                     if (!IsChunkInWorld(x, z))
                         continue;
 
@@ -145,7 +192,8 @@ namespace Minecraft
                     else if (!chunks[x, z].Active) {
                         chunks[x, z].Active = true;
                     }
-                    activeChunks.Add(chp);
+                    if (!activeChunks.Contains(chp))
+                        activeChunks.Add(chp);
 
                     for (int i = 0; i < prevActiveChunks.Count; i++) {
                         if (prevActiveChunks[i] == chp) {
@@ -164,7 +212,7 @@ namespace Minecraft
             Flat2i chunk = Flat2i.FromBlock(pos);
             Vector3i iPos = (Vector3i)pos;
 
-            if (!IsBlockInWorld(iPos) || iPos.Y < 0 || iPos.Y > VoxelData.ChunkHeight)
+            if (!IsBlockInWorld(iPos) || iPos.Y < 0 || iPos.Y > BlockData.ChunkHeight)
                 return false;
 
             if (chunks[chunk.X, chunk.Z] != null && chunks[chunk.X, chunk.Z].BlocksGenerated)
@@ -185,8 +233,10 @@ namespace Minecraft
             if (y == 0)
                 return 7;
 
+            Vector2 vec2 = new Vector2(x, z);
+
             // Basic terrain pass
-            int terrainHeight = (int)(Noise.Get2DPerlinNoise(new Vector2(x, z), 0f, biomes[0].terrainScale) * biomes[0].terrainHeight + biomes[0].minHeight);
+            int terrainHeight = (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[0].terrainScale) * biomes[0].terrainHeight + biomes[0].minHeight);
             uint blockId;
 
             if (y == terrainHeight)
@@ -198,7 +248,7 @@ namespace Minecraft
             else
                 return 0;
 
-            // second pass
+            // Second pass
             for (int i = 0; i < biomes[0].lodes.Length; i++) {
                 Lode lode = biomes[0].lodes[i];
                 if (!lode.reachTerrain && y >= terrainHeight - 3)
@@ -208,7 +258,17 @@ namespace Minecraft
                         return lode.blockID;
                 }
             }
-            
+
+            // Tree pass
+            if (y == terrainHeight) {
+                if (Noise.Get2DPerlinNoise(vec2, -700f, biomes[0].treeZoneScale) > biomes[0].treeZoneThreashold) {
+                    blockId = 7;
+                    if (Noise.Get2DPerlinNoise(vec2, 1200f, biomes[0].treePlacementScale) > biomes[0].treePlacementThreashold) {
+                        blockId = 1;
+                        Structure.MakeTree(new Vector3i(x, y, z), modifications, 5, 9);
+                    }
+                }
+            }
 
             return blockId;
         }
@@ -217,7 +277,7 @@ namespace Minecraft
 
         private static bool IsChunkInWorld(int x, int z)
         {
-            if (x >= 0 && x < VoxelData.WorldSizeInChunks && z >= 0 && z < VoxelData.WorldSizeInChunks)
+            if (x >= 0 && x < BlockData.WorldSizeInChunks && z >= 0 && z < BlockData.WorldSizeInChunks)
                 return true;
             else
                 return false;
@@ -227,9 +287,9 @@ namespace Minecraft
 
         private static bool IsBlockInWorld(int x, int y, int z)
         {
-            if (x >= 0 && x < VoxelData.WorldSizeInBlocks
-                && y >= 0 && y < VoxelData.ChunkHeight
-                && z >= 0 && z < VoxelData.WorldSizeInBlocks)
+            if (x >= 0 && x < BlockData.WorldSizeInBlocks
+                && y >= 0 && y < BlockData.ChunkHeight
+                && z >= 0 && z < BlockData.WorldSizeInBlocks)
                 return true;
             else
                 return false;
@@ -239,8 +299,8 @@ namespace Minecraft
 
         public static void Render(Shader s)
         {
-            for (int x = 0; x < VoxelData.WorldSizeInChunks; x++)
-                for (int z = 0; z < VoxelData.WorldSizeInChunks; z++)
+            for (int x = 0; x < BlockData.WorldSizeInChunks; x++)
+                for (int z = 0; z < BlockData.WorldSizeInChunks; z++)
                     if (chunks[x, z] != null)
                         chunks[x, z].Render(s);
         }

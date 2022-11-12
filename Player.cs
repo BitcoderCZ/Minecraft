@@ -167,7 +167,7 @@ namespace Minecraft
             } else if (button == MouseButton.Right && placeBlock != -Vector3.One && selectedBlock != 0) {
                 Vector3 block = placeBlock;
                 Vector3i v = new Vector3i(MathPlus.RoundToInt(block.X), MathPlus.RoundToInt(block.Y), MathPlus.RoundToInt(block.Z));
-                if (v.Y >= VoxelData.ChunkHeight || v == (Vector3i)Position || v == (Vector3i)Position + new Vector3i(0, 1, 0))
+                if (v.Y >= BlockData.ChunkHeight || v == (Vector3i)Position || v == (Vector3i)Position + new Vector3i(0, 1, 0))
                     return;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(v, selectedBlock, true);
             }

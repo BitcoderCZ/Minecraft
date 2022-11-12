@@ -27,6 +27,8 @@ namespace Minecraft
             for (uint i = 0; i < slots.Length; i++) {
                 SetSlot(i, i + 1);
             }
+
+            SetSlot((uint)slots.Length - 1, 11);
         }
 
         private static void SetSlot(uint slot, uint item)

@@ -34,6 +34,8 @@ namespace Minecraft.Graphics.UI
             new TextureInfo("ItemSlotBG"),
             new TextureInfo("ToolbarHighlight"),
             new TextureInfo("options_background"),
+            new TextureInfo("Button"),
+            new TextureInfo("Button_Selected"),
         };
         public static readonly Dictionary<string, int> Textures = new Dictionary<string, int>();
 
@@ -82,9 +84,12 @@ namespace Minecraft.Graphics.UI
             {
                 new List<IGUIElement> {
                     UIImage.CreateCenter(0.06f, 0.06f, Textures["Crosshair"], true),
-                    
                 }, // In Game
-                new List<IGUIElement> { new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false), }, // Pause menu
+                new List<IGUIElement> {
+                    new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false),
+                    UItext.CreateCenter("Game Menu", 0, 350, 3f, font),
+                    new UIButton("Give Feedback", 0f, 0f, 1.8f, font, Textures["Button"]),
+                }, // Pause menu
                 new List<IGUIElement> { 
                     UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
                     UIImage.CreatePixel(new Vector2i(230, 230), new Vector2i(820, 60), Textures["Black"]), // loading bar
