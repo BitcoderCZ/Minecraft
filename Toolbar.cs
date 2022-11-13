@@ -24,11 +24,12 @@ namespace Minecraft
             for (int i = 0; i < slots.Length; i++)
                 slots[i] = new ItemSlot(0, _icons[i]);
 
-            for (uint i = 0; i < slots.Length; i++) {
+            for (uint i = 0; i < slots.Length; i++)
                 SetSlot(i, i + 1);
-            }
 
-            SetSlot((uint)slots.Length - 1, 11);
+            SetSlot((uint)slots.Length - 1, 17);
+
+            Player.selectedItem = slots[slotIndex].itemID;
         }
 
         private static void SetSlot(uint slot, uint item)
@@ -59,7 +60,7 @@ namespace Minecraft
 
             SetHighlight(slotIndex);
 
-            Player.selectedBlock = slots[slotIndex].itemID;
+            Player.selectedItem = slots[slotIndex].itemID;
         }
     }
 

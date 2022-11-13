@@ -15,10 +15,15 @@ namespace Minecraft
     public class Chunk
     {
         uint vertexIndex = 0;
+        uint transparentVertexIndex = 0;
         List<Vertex> vertices = new List<Vertex>();
+        List<Vertex> transparentVertices = new List<Vertex>();
         List<uint> triangles = new List<uint>();
+        List<uint> transparentTriangles = new List<uint>();
         Vertex[] vertsA;
-        uint[] trigsA;
+        Vertex[] vertsB;
+        uint[] trisA;
+        uint[] trisB;
 
         public readonly uint[] blocks;
 
@@ -41,6 +46,9 @@ namespace Minecraft
         private int vao;
         private int vbo;
         private int ebo;
+        private int transpVao;
+        private int transpVbo;
+        private int transpEbo;
 
         public Chunk(Flat2i _position, bool generate)
         {
@@ -62,7 +70,9 @@ namespace Minecraft
             ClearMeshData();
             CreateMeshData();
             vertsA = vertices.ToArray();
-            trigsA = triangles.ToArray();
+            vertsB = transparentVertices.ToArray();
+            trisA = triangles.ToArray();
+            trisB = transparentTriangles.ToArray();
             CreatedMeshArrays = true;
             active = true;
         }
@@ -78,7 +88,9 @@ namespace Minecraft
             ClearMeshData();
             CreateMeshData();
             vertsA = vertices.ToArray();
-            trigsA = triangles.ToArray();
+            vertsB = transparentVertices.ToArray();
+            trisA = triangles.ToArray();
+            trisB = transparentTriangles.ToArray();
             if (CreatedMesh != 0)
                 CreatedMesh = 2;
         }
@@ -101,33 +113,52 @@ namespace Minecraft
                     for (int z = 0; z < BlockData.ChunkWidth; z++) {
                         uint blockId = GetBlock(x, y, z);
                         if (blockId != 0)
-                            AddVoxelDataToChunk(new Vector3i(x, y, z), blockId);
+                            AddBlockMeshData(new Vector3i(x, y, z), blockId);
                     }
         }
 
         public void ClearMeshData()
         {
             vertices.Clear();
+            transparentVertices.Clear();
             triangles.Clear();
+            transparentTriangles.Clear();
             vertexIndex = 0;
+            transparentVertexIndex = 0;
         }
 
-        void AddVoxelDataToChunk(Vector3i pos, uint blockId)
+        void AddBlockMeshData(Vector3i pos, uint blockId)
         {
+            bool transparent = World.blocktypes[GetBlock(pos)].isTransparent;
             for (int p = 0; p < 6; p++) {
-                if (!CheckBlock(pos + BlockData.faceChecks[p])) {
+                if (CheckBlock(pos + BlockData.faceChecks[p]) && GetBlock(pos) != World.GetBlock(pos + BlockData.faceChecks[p] + this.pos)) {
                     uint texId = World.blocktypes[blockId].GetTextureID(p);
-                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 0]], BlockData.voxelUvs[0], texId));
-                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 1]], BlockData.voxelUvs[1], texId));
-                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 2]], BlockData.voxelUvs[2], texId));
-                    vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 3]], BlockData.voxelUvs[3], texId));
-                    triangles.Add(vertexIndex);
-                    triangles.Add(vertexIndex + 1);
-                    triangles.Add(vertexIndex + 2);
-                    triangles.Add(vertexIndex + 2);
-                    triangles.Add(vertexIndex + 1);
-                    triangles.Add(vertexIndex + 3);
-                    vertexIndex += 4;
+                    
+                    if (!transparent) {
+                        vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 0]], BlockData.voxelUvs[0], texId));
+                        vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 1]], BlockData.voxelUvs[1], texId));
+                        vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 2]], BlockData.voxelUvs[2], texId));
+                        vertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 3]], BlockData.voxelUvs[3], texId));
+                        triangles.Add(vertexIndex);
+                        triangles.Add(vertexIndex + 1);
+                        triangles.Add(vertexIndex + 2);
+                        triangles.Add(vertexIndex + 2);
+                        triangles.Add(vertexIndex + 1);
+                        triangles.Add(vertexIndex + 3);
+                        vertexIndex += 4;
+                    } else {
+                        transparentVertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 0]], BlockData.voxelUvs[0], texId));
+                        transparentVertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 1]], BlockData.voxelUvs[1], texId));
+                        transparentVertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 2]], BlockData.voxelUvs[2], texId));
+                        transparentVertices.Add(new Vertex(pos + BlockData.blockVerts[BlockData.blockTris[p, 3]], BlockData.voxelUvs[3], texId));
+                        transparentTriangles.Add(transparentVertexIndex);
+                        transparentTriangles.Add(transparentVertexIndex + 1);
+                        transparentTriangles.Add(transparentVertexIndex + 2);
+                        transparentTriangles.Add(transparentVertexIndex + 2);
+                        transparentTriangles.Add(transparentVertexIndex + 1);
+                        transparentTriangles.Add(transparentVertexIndex + 3);
+                        transparentVertexIndex += 4;
+                    }
                 }
             }
 
@@ -135,6 +166,11 @@ namespace Minecraft
 
         void InitMesh()
         {
+            GL.CreateVertexArrays(1, out transpVao);
+            GL.BindVertexArray(transpVao);
+            GL.CreateBuffers(1, out transpEbo);
+            GL.CreateBuffers(1, out transpVbo);
+
             GL.CreateVertexArrays(1, out vao);
             GL.BindVertexArray(vao);
             GL.CreateBuffers(1, out ebo);
@@ -145,7 +181,7 @@ namespace Minecraft
 
         public void CreateMesh()
         {
-            GL.NamedBufferData(ebo, triangles.Count * sizeof(uint), trigsA, BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(ebo, triangles.Count * sizeof(uint), trisA, BufferUsageHint.DynamicDraw);
             GL.VertexArrayElementBuffer(vao, ebo);
 
             int vertexBindingPoint = 0;
@@ -160,6 +196,22 @@ namespace Minecraft
             GL.VertexArrayAttribFormat(vao, 1, 3, VertexAttribType.Float, false, 3 * sizeof(float));
             GL.VertexArrayAttribBinding(vao, 1, vertexBindingPoint);
             GL.EnableVertexArrayAttrib(vao, 1);
+
+
+            GL.NamedBufferData(transpEbo, transparentTriangles.Count * sizeof(uint), trisB, BufferUsageHint.DynamicDraw);
+            GL.VertexArrayElementBuffer(transpVao, transpEbo);
+
+            GL.NamedBufferData(transpVbo, transparentVertices.Count * Vertex.Size, vertsB, BufferUsageHint.DynamicDraw);
+            GL.VertexArrayVertexBuffer(transpVao, vertexBindingPoint, transpVbo, IntPtr.Zero, Vertex.Size);
+
+            // pos
+            GL.VertexArrayAttribFormat(transpVao, 0, 3, VertexAttribType.Float, false, 0);
+            GL.VertexArrayAttribBinding(transpVao, 0, vertexBindingPoint);
+            GL.EnableVertexArrayAttrib(transpVao, 0);
+            // uv
+            GL.VertexArrayAttribFormat(transpVao, 1, 3, VertexAttribType.Float, false, 3 * sizeof(float));
+            GL.VertexArrayAttribBinding(transpVao, 1, vertexBindingPoint);
+            GL.EnableVertexArrayAttrib(transpVao, 1);
         }
 
         public void Render(Shader s)
@@ -180,8 +232,13 @@ namespace Minecraft
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
             GL.Uniform1(5, Texture.taid);
 
+            GL.Enable(EnableCap.CullFace);
             GL.BindVertexArray(vao);
             GL.DrawElements(BeginMode.Triangles, triangles.Count, DrawElementsType.UnsignedInt, 0);
+
+            GL.Disable(EnableCap.CullFace);
+            GL.BindVertexArray(transpVao);
+            GL.DrawElements(BeginMode.Triangles, transparentTriangles.Count, DrawElementsType.UnsignedInt, 0);
         }
 
         private void UpdateSurroundingBlocks(int x, int y, int z)
@@ -223,9 +280,9 @@ namespace Minecraft
         public bool CheckBlock(int X, int Y, int Z)
         {
             if (!IsBlockInChunk(X, Y, Z))
-                return World.CheckForBlock(X + pos.X, Y, Z + pos.Z);
+                return World.CheckIfBlockTransparent(X + pos.X, Y, Z + pos.Z);
 
-            return World.blocktypes[blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)]].isSolid;
+            return World.blocktypes[blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)]].isTransparent;
         }
         public bool CheckBlock(Vector3i pos)
             => CheckBlock(pos.X, pos.Y, pos.Z);

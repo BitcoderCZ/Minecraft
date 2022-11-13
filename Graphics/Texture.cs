@@ -49,20 +49,27 @@ namespace Minecraft.Graphics
             new TextureInfo("oak_log"), // 16
             new TextureInfo("oak_log_top"), // 17
             new TextureInfo("oak_leaves", new Vector3(0.65f, 1f, 0.2f)), // 18
+            new TextureInfo("glass"), // 19
         };
         private static readonly ItemTextureInfo[] itemTextures = new ItemTextureInfo[]
         {
-            new ItemTextureInfo("stone", LF.Items),
+            new ItemTextureInfo("stone", LF.Items), // 1
             new ItemTextureInfo("grass_block", LF.Items),
-            new ItemTextureInfo("dirt", LF.Items),
+            new ItemTextureInfo("dirt", LF.Items), // 3
             new ItemTextureInfo("cobblestone", LF.Items),
             new ItemTextureInfo("oak_planks", LF.Items),
             new ItemTextureInfo("oak_sapling", LF.Blocks),
             new ItemTextureInfo("bedrock", LF.Items),
             new ItemTextureInfo("sand", LF.Items),
             new ItemTextureInfo("granite", LF.Items),
+            new ItemTextureInfo("polished_granite", LF.Items), // 10
+            new ItemTextureInfo("diorite", LF.Items),
+            new ItemTextureInfo("polished_diorite", LF.Items),
+            new ItemTextureInfo("andesite", LF.Items),
+            new ItemTextureInfo("polished_andesite", LF.Items), // 14
             new ItemTextureInfo("oak_log", LF.Items),
             new ItemTextureInfo("oak_leaves", LF.Items),
+            new ItemTextureInfo("glass_block", LF.Items), // 17
         };
 
         public static void LoadItems()
@@ -150,7 +157,7 @@ namespace Minecraft.Graphics
                             float r = (float)(c.R / 255f) * filter.X;
                             float g = (float)(c.G / 255f) * filter.Y;
                             float b = (float)(c.B / 255f) * filter.Z;
-                            bm.SetPixel(x, y, Color.FromArgb(255, (byte)(r * 255f), (byte)(g * 255f), (byte)(b * 255f)));
+                            bm.SetPixel(x, y, Color.FromArgb(c.A, (byte)(r * 255f), (byte)(g * 255f), (byte)(b * 255f)));
                         }
                 }
 

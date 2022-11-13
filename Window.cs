@@ -57,6 +57,7 @@ namespace Minecraft
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
             GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
             shader = new Shader();
             shader.Compile("shader");
@@ -164,8 +165,9 @@ namespace Minecraft
                 Camera.UpdateView(Width, Height);
                 shader.UploadMat4("uProjection", ref Camera.projMatrix);
                 shader.UploadMat4("uView", ref Camera.viewMatrix);
-                GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
                 World.Render(shader);
+
+                GL.Enable(EnableCap.CullFace);
 
                 texShader.Bind();
                 texShader.UploadMat4("uProjection", ref Camera.projMatrix);
@@ -174,7 +176,6 @@ namespace Minecraft
             }
 
             GL.DepthMask(false);
-            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GUI.Render(uiShader);
             
             SwapBuffers();

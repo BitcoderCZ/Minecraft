@@ -6,6 +6,7 @@ namespace Minecraft
     {
         public string blockName;
         public bool isSolid;
+        public bool isTransparent;
         public int item;
 
         public uint backFaceTexture;
@@ -15,10 +16,11 @@ namespace Minecraft
         public uint leftFaceTexture;
         public uint rightFaceTexture;
 
-        public BlockType(string name, bool solid, uint back, uint front, uint top, uint bottom, uint left, uint right, int _item)
+        public BlockType(string name, bool solid, bool transparent, uint back, uint front, uint top, uint bottom, uint left, uint right, int _item)
         {
             blockName = name;
             isSolid = solid;
+            isTransparent = transparent;
             backFaceTexture = back;
             frontFaceTexture = front;
             topFaceTexture = top;
@@ -28,7 +30,7 @@ namespace Minecraft
             item = _item;
         }
 
-        public BlockType(string name, bool solid, uint tex, int _item) : this(name, solid, tex, tex, tex, tex, tex, tex, _item)
+        public BlockType(string name, bool solid, bool transparent, uint tex, int _item) : this(name, solid, transparent, tex, tex, tex, tex, tex, tex, _item)
         { }
 
         public uint GetTextureID(int faceIndex)

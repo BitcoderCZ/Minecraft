@@ -16,23 +16,24 @@ namespace Minecraft
     {
         public static readonly BlockType[] blocktypes = new BlockType[]
         {
-            new BlockType("air", false, 0, -1), // 0
-            new BlockType("stone", true, 1, 0), // 1
-            new BlockType("grass_block", true, 3, 3, 2, 4, 3, 3, 1), // 2
-            new BlockType("dirt", true, 4, 2), // 3
-            new BlockType("cobblestone", true, 5, 3), // 4
-            new BlockType("oak_planks", true, 6, 4), // 5
-            new BlockType("oak_sapling", false, 7, 5), // 6
-            new BlockType("bedrock", true, 8, 6), // 7
-            new BlockType("sand", true, 9, 7), // 8
-            new BlockType("granite", true, 10, 8), // 9
-            new BlockType("polished_granite", true, 11, -1), // 10
-            new BlockType("diorite", true, 12, -1), // 11
-            new BlockType("polished_diorite", true, 13, -1), // 12
-            new BlockType("andesite", true, 14, -1), // 13
-            new BlockType("polished_andesite", true, 15, -1), // 14
-            new BlockType("oak_log", true, 16, 16, 17, 17, 16, 16, 9), // 15
-            new BlockType("oak_leaves", true, 18, 10), // 16
+            new BlockType("air", false, true, 0, -1), // 0
+            new BlockType("stone", true, false, 1, 0), // 1
+            new BlockType("grass_block", true, false, 3, 3, 2, 4, 3, 3, 1), // 2
+            new BlockType("dirt", true, false, 4, 2), // 3
+            new BlockType("cobblestone", true, false, 5, 3), // 4
+            new BlockType("oak_planks", true, false, 6, 4), // 5
+            new BlockType("oak_sapling", false, true, 7, 5), // 6
+            new BlockType("bedrock", true, false, 8, 6), // 7
+            new BlockType("sand", true, false, 9, 7), // 8
+            new BlockType("granite", true, false, 10, 8), // 9
+            new BlockType("polished_granite", true, false, 11, 9), // 10
+            new BlockType("diorite", true, false, 12, 10), // 11
+            new BlockType("polished_diorite", false, true, 13, 11), // 12
+            new BlockType("andesite", true, false, 14, 12), // 13
+            new BlockType("polished_andesite", false, true, 15, 13), // 14
+            new BlockType("oak_log", true, false, 16, 16, 17, 17, 16, 16, 14), // 15
+            new BlockType("oak_leaves", true, true, 18, 15), // 16
+            new BlockType("glass_block", true, true, 19, 16), // 17
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
@@ -207,6 +208,19 @@ namespace Minecraft
             }
         }
 
+        public static uint GetBlock(Vector3i pos)
+        {
+            Flat2i chunk = Flat2i.FromBlock(pos);
+
+            if (!IsBlockInWorld(pos) || pos.Y < 0 || pos.Y > BlockData.ChunkHeight)
+                return 0;
+
+            if (chunks[chunk.X, chunk.Z] != null && chunks[chunk.X, chunk.Z].BlocksGenerated)
+                return chunks[chunk.X, chunk.Z].GetBlockGlobalPos(pos);
+
+            return GetGenBlock(pos);
+        }
+
         public static bool CheckForBlock(Vector3 pos)
         {
             Flat2i chunk = Flat2i.FromBlock(pos);
@@ -222,6 +236,22 @@ namespace Minecraft
         }
         public static bool CheckForBlock(float x, float y, float z)
             => CheckForBlock(new Vector3(x, y, z));
+
+        public static bool CheckIfBlockTransparent(Vector3 pos)
+        {
+            Flat2i chunk = Flat2i.FromBlock(pos);
+            Vector3i iPos = (Vector3i)pos;
+
+            if (!IsBlockInWorld(iPos) || iPos.Y < 0 || iPos.Y > BlockData.ChunkHeight)
+                return false;
+
+            if (chunks[chunk.X, chunk.Z] != null && chunks[chunk.X, chunk.Z].BlocksGenerated)
+                return blocktypes[chunks[chunk.X, chunk.Z].GetBlockGlobalPos(iPos)].isTransparent;
+
+            return blocktypes[GetGenBlock(iPos)].isTransparent;
+        }
+        public static bool CheckIfBlockTransparent(float x, float y, float z)
+            => CheckIfBlockTransparent(new Vector3(x, y, z));
 
         public static uint GetGenBlock(int x, int y, int z)
         {
