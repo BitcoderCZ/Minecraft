@@ -49,13 +49,14 @@ namespace Minecraft
         private static List<Flat2i> activeChunks = new List<Flat2i>();
         public static Flat2i prevPlayerChunk;
 
-        private static List<Flat2i> chunksToCreate = new List<Flat2i>();
+        public static List<Flat2i> chunksToCreate = new List<Flat2i>();
 
-        private static Queue<Flat2i> chunksToUpdate = new Queue<Flat2i>();
+        public static List<Flat2i> chunksToUpdate = new List<Flat2i>();
 
-        private static Queue<BlockMod> modifications = new Queue<BlockMod>();
+        public static Queue<BlockMod> modifications = new Queue<BlockMod>(2048 * 4);
 
         private static Thread createChunksThread;
+        private static Thread applyModificationsThread;
 
         public static bool Generated { get; private set; }
 
@@ -66,43 +67,91 @@ namespace Minecraft
             seed = (uint)r.Next();
             Noise.SetSeed(seed);
             spawnPos = new Vector3(BlockData.WorldSizeInBlocks / 2f, BlockData.ChunkHeight + 2f, BlockData.WorldSizeInBlocks / 2f);
+
             createChunksThread = new Thread(new ThreadStart(CreateChunks));
             createChunksThread.Start();
+
+            applyModificationsThread = new Thread(new ThreadStart(ApplyModifications));
+            applyModificationsThread.Start();
         }
 
         public static void Update()
         {
             if (BlockToChunk(Player.Position) != prevPlayerChunk)
                 CheckViewDistance();
+
+            if (chunksToUpdate.Count > 0)
+                UpdateChunks();
+
+            Console.SetCursorPosition(0, 6);
+            Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}     ");
+        }
+
+        private static void CreateChunk()
+        {
+            Flat2i pos = chunksToCreate[0];
+            chunksToCreate.RemoveAt(0);
+            if (!activeChunks.Contains(pos))
+                activeChunks.Add(pos);
+            chunks[pos.X, pos.Z].Init();
+        }
+
+        private static void UpdateChunks()
+        {
+            bool updated = false;
+            int index = 0;
+
+            while (!updated && index < chunksToUpdate.Count) {
+                Flat2i pos = chunksToUpdate[index];
+                if (chunks[pos.X, pos.Z].BlocksGenerated && chunks[pos.X, pos.Z].CreatedMesh != 0) {
+                    chunks[pos.X, pos.Z].UpdateMesh();
+                    chunksToUpdate.RemoveAt(index);
+                    updated = true;
+                }
+                else
+                    index++;
+            }
+        }
+
+        private static void ApplyModifications()
+        {
+            while (Program.Window.Running) {
+                if (!Generated)
+                    continue;
+                int count = 0;
+                while (modifications.Count > 0) {
+                    BlockMod mod = modifications.Dequeue();
+                    Flat2i cp = BlockToChunk(mod.Pos);
+
+                    if (chunks[cp.X, cp.Z] == null && !chunksToCreate.Contains(cp)) {
+                        chunks[cp.X, cp.Z] = new Chunk(cp, false);
+                        chunksToCreate.Add(cp);
+                        modifications.Enqueue(mod);
+                        continue;
+                    }
+
+                    chunks[cp.X, cp.Z].modifications.Enqueue(mod);
+
+                    if (!chunksToUpdate.Contains(cp))
+                        chunksToUpdate.Add(cp);
+
+                    if (count > 100)
+                        break;
+
+                    count++;
+                }
+                Thread.Sleep(0);
+            }
         }
 
         private static void CreateChunks()
         {
             while (Program.Window.Running) {
                 if (chunksToCreate.Count > 0) {
-                    chunks[chunksToCreate[0].X, chunksToCreate[0].Z].Init();
-                    chunksToCreate.RemoveAt(0);
-
-                    while (modifications.Count > 0) {
-                        BlockMod mod = modifications.Dequeue();
-                        Flat2i cp = BlockToChunk(mod.Pos);
-
-                        if (chunks[cp.X, cp.Z] == null) {
-                            chunks[cp.X, cp.Z] = new Chunk(cp, true);
-                            activeChunks.Add(cp);
-                        }
-
-                        chunks[cp.X, cp.Z].modifications.Enqueue(mod);
-
-                        if (!chunksToUpdate.Contains(cp))
-                            chunksToUpdate.Enqueue(cp);
-                    }
-
-                    while (chunksToUpdate.Count > 0) {
-                        Flat2i cp = chunksToUpdate.Dequeue();
-                        chunks[cp.X, cp.Z].UpdateMesh();
-                    }
+                    CreateChunk();
                 }
+
+                Thread.Sleep(0);
             }
         }
 
@@ -121,7 +170,8 @@ namespace Minecraft
                 for (int z = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
-                        chunks[x, z] = new Chunk(pos, true);
+                        chunks[x, z] = new Chunk(pos, false);
+                        chunks[x, z].Init();
                         activeChunks.Add(pos);
 
                         length += step;
@@ -141,12 +191,13 @@ namespace Minecraft
                 chunks[cp.X, cp.Z].modifications.Enqueue(mod);
 
                 if (!chunksToUpdate.Contains(cp))
-                    chunksToUpdate.Enqueue(cp);
+                    chunksToUpdate.Add(cp);
             }
 
             while (chunksToUpdate.Count > 0) {
-                Flat2i cp = chunksToUpdate.Dequeue();
+                Flat2i cp = chunksToUpdate[0];
                 chunks[cp.X, cp.Z].UpdateMesh();
+                chunksToUpdate.RemoveAt(0);
             }
 
             Player.Position = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
