@@ -49,9 +49,9 @@ namespace Minecraft
         public static void MouseScrool(int scrool)
         {
             if (scrool > 0)
-                slotIndex++;
-            else
                 slotIndex--;
+            else
+                slotIndex++;
 
             if (slotIndex >= slots.Length)
                 slotIndex = 0;

@@ -130,11 +130,11 @@ namespace Minecraft
                     Player.Rotation.X = -89;
                 else if (Player.Rotation.X > 89)
                     Player.Rotation.X = 89;
-
-                Player.Update(keyboardState, delta);
-
-                World.Update();
             }
+
+            Player.Update(keyboardState, delta);
+
+            World.Update();
 
             // Other keyboard
             if (keyboardState.IsKeyDown(Key.Escape)) {
@@ -156,7 +156,7 @@ namespace Minecraft
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            GL.ClearColor(Color.Blue);
+            GL.ClearColor(Color.Cyan);
             GL.DepthMask(true);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -185,6 +185,7 @@ namespace Minecraft
         {
             keyboardState = e.Keyboard;
             GUI.OnKeyDown(e.Key, e.Modifiers);
+            Player.OnKeyDown(e.Key, e.Modifiers);
         }
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
@@ -211,12 +212,12 @@ namespace Minecraft
         }
 
         // Mouse
-        private void CenterCursor()
+        public void CenterCursor()
         {
             System.Windows.Forms.Cursor.Position = new Point(Width / 2 + Location.X, Height / 2 + Location.Y);
             lastMousePos = System.Windows.Forms.Cursor.Position;
         }
-        protected void LockMouse()
+        public void LockMouse()
         {
             mouseLocked = true;
             origCursorPosition = System.Windows.Forms.Cursor.Position;
@@ -224,7 +225,7 @@ namespace Minecraft
             CenterCursor();
         }
 
-        protected void UnlockMouse()
+        public void UnlockMouse()
         {
             mouseLocked = false;
             CursorVisible = true;

@@ -17,6 +17,7 @@ namespace Minecraft
 {
     public static class Player
     {
+        private const float sneakSpeed = 2.5f;
         private const float walfSpeed = 5f;
         private const float sprintSpeed = 8f;
         private const float gravity = -9.8f * 1.5f;
@@ -30,6 +31,11 @@ namespace Minecraft
         private const float thirdCheckHeight = 1.8f;
 
         private static bool isGrounded;
+        private static bool isSneaking;
+
+        private static Vector3 lastFramePos;
+        private static Vector3 lastlastFramePos;
+        private static bool sneakBlockedLastFrame;
 
         public static Vector3 Position = Vector3.Zero;
         public static Vector3 Rotation;
@@ -77,35 +83,84 @@ namespace Minecraft
 
         public static void Update(KeyboardState keyboardState, float delta) // todo implement sneak
         {
-            PlaceCursorBlock();
+            if (!World.InUI) {
+                PlaceCursorBlock();
 
-            // Movement
-            GetInputs(keyboardState, out float ver, out float hor);
+                // Movement
+                GetInputs(keyboardState, out float ver, out float hor);
 
-            ver *= delta;
-            hor *= delta;
+                ver *= delta;
+                hor *= delta;
 
-            CalcVelocity(ver, hor, delta);
-            if (jumpRequest)
-                Jump();
+                CalcVelocity(ver, hor, delta);
+                if (jumpRequest)
+                    Jump();
 
-            jumpRequest = false;
+                jumpRequest = false;
 
-            Position += velocity;
+                Console.SetCursorPosition(0, 10);
+                Console.Write(WillFall(new Vector3(velocity.X, 0f, 0f)));
+                Console.SetCursorPosition(0, 11);
+                Console.Write(WillFall(new Vector3(velocity.Z, 0f, 0f)));
 
-            Console.Title = $"Player pos: {Position}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}, scene: {GUI.Scene}";
-            /*if (keyboardState.IsKeyDown(Key.W)) // flying
-                Move(0f, delta * mult);
-            else if (keyboardState.IsKeyDown(Key.S))
-                Move(180f, delta * mult);
-            if (keyboardState.IsKeyDown(Key.A))
-                Move(90f, delta * mult);
-            else if (keyboardState.IsKeyDown(Key.D))
-                Move(270f, delta * mult);
-            if (keyboardState.IsKeyDown(Key.Space)) 
-                Position.Y += delta * 6f;
-            else if (keyboardState.IsKeyDown(Key.ShiftLeft))
-                Position.Y -= delta * 6f;*/
+                /*if (sneakBlockedLastFrame && isSneaking && !isGrounded && verticalMomentum <= 0f) {
+
+                    velocity = Vector3.Zero;
+                    Position = lastlastFramePos;
+                    verticalMomentum = 0f;
+                    sneakBlockedLastFrame = true;
+                }
+                else if (isSneaking && isGrounded) {
+                    bool l = false;
+                    if (WillFall(new Vector3(velocity.X, 0f, 0f))) {
+                        velocity.X = 0f;
+                        l = true;
+                    }
+                    if (WillFall(new Vector3(velocity.Z, 0f, 0f))) {
+                        velocity.Z = 0f;
+                        l = true;
+                    }
+                    sneakBlockedLastFrame = l;
+                }
+                else
+                    sneakBlockedLastFrame = false;*/
+
+                lastlastFramePos = lastFramePos;
+                lastFramePos = Position;
+
+                Position += velocity;
+
+                if (velocity.X > velocity.Z) {
+                    if (isSneaking && WillFall(new Vector3(velocity.X, 0f, 0f))) {
+                        Position.X -= velocity.X;
+                    }
+                    if (isSneaking && WillFall(new Vector3(velocity.Z, 0f, 0f))) {
+                        Position.Z -= velocity.Z;
+                    }
+                } else {
+                    if (isSneaking && WillFall(new Vector3(velocity.Z, 0f, 0f))) {
+                        Position.Z -= velocity.Z;
+                    }
+                    if (isSneaking && WillFall(new Vector3(velocity.X, 0f, 0f))) {
+                        Position.X -= velocity.X;
+                    }
+                }
+
+
+                Console.Title = $"Player pos: {Position}, Player Velocity: {velocity}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}, scene: {GUI.Scene}";
+                /*if (keyboardState.IsKeyDown(Key.W)) // flying
+                    Move(0f, delta * mult);
+                else if (keyboardState.IsKeyDown(Key.S))
+                    Move(180f, delta * mult);
+                if (keyboardState.IsKeyDown(Key.A))
+                    Move(90f, delta * mult);
+                else if (keyboardState.IsKeyDown(Key.D))
+                    Move(270f, delta * mult);
+                if (keyboardState.IsKeyDown(Key.Space)) 
+                    Position.Y += delta * 6f;
+                else if (keyboardState.IsKeyDown(Key.ShiftLeft))
+                    Position.Y -= delta * 6f;*/
+            }
         }
 
         private static void Jump()
@@ -145,7 +200,12 @@ namespace Minecraft
             ver = 0f;
             hor = 0f;
 
-            float mult = keyboardState.IsKeyDown(Key.LControl) ? sprintSpeed : walfSpeed;
+            if (keyboardState.IsKeyDown(Key.LShift))
+                isSneaking = true;
+            else
+                isSneaking = false;
+
+            float mult = isSneaking ? sneakSpeed : (keyboardState.IsKeyDown(Key.LControl) ? sprintSpeed : walfSpeed);
             if (keyboardState.IsKeyDown(Key.W)) // flying
                 ver = mult;
             else if (keyboardState.IsKeyDown(Key.S))
@@ -157,6 +217,22 @@ namespace Minecraft
 
             if (isGrounded && keyboardState.IsKeyDown(Key.Space))
                 jumpRequest = true;
+
+        }
+
+        public static void OnKeyDown(Key key, KeyModifiers modifiers)
+        {
+            if (key == Key.E) {
+                if (GUI.Scene == 0) {
+                    GUI.SetScene(3);
+                    Program.Window.UnlockMouse();
+                }
+                else {
+                    GUI.SetScene(0);
+                    Program.Window.CenterCursor();
+                    Program.Window.LockMouse();
+                }
+            }
         }
 
         public static void MouseDown(MouseButton button)
@@ -168,7 +244,12 @@ namespace Minecraft
             } else if (button == MouseButton.Right && placeBlock != -Vector3.One && selectedItem != 0) {
                 Vector3 block = placeBlock;
                 Vector3i v = new Vector3i(MathPlus.RoundToInt(block.X), MathPlus.RoundToInt(block.Y), MathPlus.RoundToInt(block.Z));
-                if (v.Y >= BlockData.ChunkHeight || v == (Vector3i)Position || v == (Vector3i)Position + new Vector3i(0, 1, 0))
+                if (v.Y >= BlockData.ChunkHeight 
+                    || v == (Vector3i)Position || v == (Vector3i)Position + new Vector3i(0, 1, 0)
+                    || v == (Vector3i)(Position + new Vector3(playerWidth, 0.01f, 0f)) || v == (Vector3i)(Position + new Vector3(playerWidth, 0f, 0f)) + new Vector3i(0, 1, 0)
+                    || v == (Vector3i)(Position + new Vector3(0f, 0.01f, playerWidth)) || v == (Vector3i)(Position + new Vector3(0f, 0f, playerWidth)) + new Vector3i(0, 1, 0)
+                    || v == (Vector3i)(Position + new Vector3(-playerWidth, 0.01f, 0f)) || v == (Vector3i)(Position + new Vector3(-playerWidth, 0f, 0f)) + new Vector3i(0, 1, 0)
+                    || v == (Vector3i)(Position + new Vector3(0f, 0.01f, -playerWidth)) || v == (Vector3i)(Position + new Vector3(0f, 0f, -playerWidth)) + new Vector3i(0, 1, 0))
                     return;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(v, selectedItem, true);
             }
@@ -199,12 +280,41 @@ namespace Minecraft
             placeBlock = -Vector3i.One;
         }
 
+        private static bool WillFall(Vector3 offset)
+        {
+            const float off = -0.01f;
+            float w = playerWidth - 0.05f;
+            if ((World.CheckForBlock(Position.X - w + offset.X, Position.Y + off, Position.Z - w + offset.Z)
+                && !World.CheckForBlock(Position.X - w + offset.X, (int)(Position.Y + off) + 1f, Position.Z - w + offset.Z)) ||
+                (World.CheckForBlock(Position.X + w + offset.X, Position.Y + off, Position.Z - w + offset.Z)
+                && !World.CheckForBlock(Position.X + w + offset.X, (int)(Position.Y + off) + 1f, Position.Z - w + offset.Z)) ||
+                (World.CheckForBlock(Position.X - w + offset.X, Position.Y + off, Position.Z + w + offset.Z)
+                && !World.CheckForBlock(Position.X - w + offset.X, (int)(Position.Y + off) + 1f, Position.Z + w + offset.Z)) ||
+                (World.CheckForBlock(Position.X + w + offset.X, Position.Y + off, Position.Z + w + offset.Z)
+                && !World.CheckForBlock(Position.X + w + offset.X, (int)(Position.Y + off) + 1f, Position.Z + w + offset.Z)) ||
+                World.CheckForBlock(Position.X + offset.X, Position.Y + off, Position.Z + offset.Z)) {
+                return false;
+            }
+            else {
+                return true;
+            }
+            
+        }
+
         private static float CheckDownSpeed(float downSpeed)
         {
-            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z - playerWidth)) ||
-                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z - playerWidth)) ||
-                (World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z + playerWidth)) ||
-                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 0.8f, Position.Z + playerWidth)) ||
+            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) 
+                && !World.CheckForBlock(Position.X - playerWidth, Position.Y, Position.Z - playerWidth)
+                && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 1f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z - playerWidth) 
+                && !World.CheckForBlock(Position.X + playerWidth, Position.Y, Position.Z - playerWidth)
+                && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 1f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X - playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) 
+                && !World.CheckForBlock(Position.X - playerWidth, Position.Y, Position.Z + playerWidth)
+                && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + downSpeed) + 1f, Position.Z + playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + downSpeed, Position.Z + playerWidth) 
+                && !World.CheckForBlock(Position.X + playerWidth, Position.Y, Position.Z + playerWidth)
+                && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + downSpeed) + 1f, Position.Z + playerWidth)) ||
                 World.CheckForBlock(Position.X, Position.Y + downSpeed, Position.Z)) {
                 isGrounded = true;
                 verticalMomentum = verticalMomentum / 2f;
@@ -217,10 +327,10 @@ namespace Minecraft
         }
         private static float CheckUpSpeed(float upSpeed)
         {
-            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z - playerWidth)) ||
-                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z - playerWidth)) ||
-                (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z + playerWidth)) ||
-                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 0.8f, Position.Z + playerWidth))) {
+            if ((World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 1f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 1f, Position.Z - playerWidth)) ||
+                (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X - playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 1f, Position.Z + playerWidth)) ||
+                (World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) && !World.CheckForBlock(Position.X + playerWidth, (int)(Position.Y + playerHeight + upSpeed) - 1f, Position.Z + playerWidth))) {
                 verticalMomentum = -0.0000001f;
                 return 0f;
             }
@@ -228,19 +338,6 @@ namespace Minecraft
                 return upSpeed;
             }
         }
-        /*private static float CheckUpSpeed(float upSpeed)
-        {
-            if (World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
-                World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z - playerWidth) ||
-                World.CheckForBlock(Position.X - playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth) ||
-                World.CheckForBlock(Position.X + playerWidth, Position.Y + playerHeight + upSpeed, Position.Z + playerWidth)) {
-                verticalMomentum = -0.0000001f;
-                return 0f;
-            }
-            else {
-                return upSpeed;
-            }
-        }*/
 
         public static bool front
         {

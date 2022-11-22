@@ -13,6 +13,8 @@ namespace Minecraft
 
         static void Main(string[] args)
         {
+            Console.WriteLine("Minecraft CSharp Edition");
+            Console.WriteLine($"Version: {BlockData.Version}");
             Console.WriteLine($"Main directory: {Environment.CurrentDirectory}/");
             Window = new Window();
             string version;

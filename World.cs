@@ -4,6 +4,7 @@ using Minecraft.Math;
 using OpenTK;
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -37,7 +38,7 @@ namespace Minecraft
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f, 1.0f, 0.5f, 18f, 0.6f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
+            new BiomeAttribs("plains", 60, 14, 0.2f, 0.4f, 0.35f, 18f, 0.6f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
                 new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
                                 new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
         };
@@ -53,12 +54,14 @@ namespace Minecraft
 
         public static List<Flat2i> chunksToUpdate = new List<Flat2i>();
 
-        public static Queue<BlockMod> modifications = new Queue<BlockMod>(2048 * 4);
+        public static ConcurrentQueue<BlockMod> modifications = new ConcurrentQueue<BlockMod>(/*2048 * 4*/);
 
         private static Thread createChunksThread;
         private static Thread applyModificationsThread;
 
         public static bool Generated { get; private set; }
+
+        public static bool InUI { get => GUI.Scene != 0; }
 
         static World()
         {
@@ -77,14 +80,17 @@ namespace Minecraft
 
         public static void Update()
         {
+            Console.SetCursorPosition(0, 6);
+            Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}, Scene: {GUI.Scene}        ");
+
+            if (InUI)
+                return;
+
             if (BlockToChunk(Player.Position) != prevPlayerChunk)
                 CheckViewDistance();
 
             if (chunksToUpdate.Count > 0)
                 UpdateChunks();
-
-            Console.SetCursorPosition(0, 6);
-            Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}     ");
         }
 
         private static void CreateChunk()
@@ -120,7 +126,11 @@ namespace Minecraft
                     continue;
                 int count = 0;
                 while (modifications.Count > 0) {
-                    BlockMod mod = modifications.Dequeue();
+                    BlockMod mod;
+                    /*lock (Structure.addLock) {
+                        mod = modifications.de();
+                    }*/
+                    while (!modifications.TryDequeue(out mod)) { }
                     Flat2i cp = BlockToChunk(mod.Pos);
 
                     if (chunks[cp.X, cp.Z] == null && !chunksToCreate.Contains(cp)) {
@@ -180,7 +190,8 @@ namespace Minecraft
                 }
 
             while (modifications.Count > 0) {
-                BlockMod mod = modifications.Dequeue();
+                BlockMod mod;
+                while (!modifications.TryDequeue(out mod)) { }
                 Flat2i cp = BlockToChunk(mod.Pos);
 
                 if (chunks[cp.X, cp.Z] == null) {

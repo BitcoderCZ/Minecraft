@@ -19,6 +19,8 @@ namespace Minecraft
 
 		public const int RenderDistance = 3;
 
+		public const string Version = "v1.0.1.2";
+
 		public static readonly Vector3[] blockVerts = new Vector3[8] {
 			new Vector3(0.0f, 0.0f, 0.0f),
 			new Vector3(1.0f, 0.0f, 0.0f),

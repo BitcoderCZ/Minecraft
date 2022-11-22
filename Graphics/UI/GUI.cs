@@ -95,7 +95,11 @@ namespace Minecraft.Graphics.UI
                     UIImage.CreatePixel(new Vector2i(230, 230), new Vector2i(820, 60), Textures["Black"]), // loading bar
                     UIImage.CreatePixel(new Vector2i(240, 240), new Vector2i(1, 40), Textures["Green"]), // loading bar
                     UItext.CreateCenter("Loading...", 0, 50, 5f, font),
-                } // Loading
+                }, // Loading
+                new List<IGUIElement>
+                {
+
+                }, // Inventory
             };
 
             float scale = 2.5f;

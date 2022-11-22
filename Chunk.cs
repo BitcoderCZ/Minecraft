@@ -232,11 +232,9 @@ namespace Minecraft
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
             GL.Uniform1(5, Texture.taid);
 
-            GL.Enable(EnableCap.CullFace);
             GL.BindVertexArray(vao);
             GL.DrawElements(BeginMode.Triangles, triangles.Count, DrawElementsType.UnsignedInt, 0);
 
-            GL.Disable(EnableCap.CullFace);
             GL.BindVertexArray(transpVao);
             GL.DrawElements(BeginMode.Triangles, transparentTriangles.Count, DrawElementsType.UnsignedInt, 0);
         }
