@@ -26,7 +26,7 @@ namespace Minecraft
         Shader shader;
         Shader texShader;
         Shader uiShader;
-        Font font;
+        public Font font;
         public KeyboardState keyboardState;
 
         // Mouse
@@ -106,6 +106,15 @@ namespace Minecraft
         {
             float delta = (float)e.Time;
 
+            if (mouseLocked) {
+                Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
+                if (mouseDelta != Point.Empty) {
+                    Player.Rotation.X += mouseDelta.Y * 0.25f;
+                    Player.Rotation.Y += -mouseDelta.X * 0.25f;
+                    CenterCursor();
+                }
+            }
+
             if (GUI.Scene == 0) {
                 // Rotation
                 if (keyboardState.IsKeyDown(Key.Left))
@@ -116,15 +125,6 @@ namespace Minecraft
                     Player.Rotation.X -= delta * 80f;
                 else if (keyboardState.IsKeyDown(Key.Down))
                     Player.Rotation.X += delta * 80f;
-
-                if (mouseLocked) {
-                    Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
-                    if (mouseDelta != Point.Empty) {
-                        Player.Rotation.X += mouseDelta.Y * 0.25f;
-                        Player.Rotation.Y += -mouseDelta.X * 0.25f;
-                        CenterCursor();
-                    }
-                }
 
                 if (Player.Rotation.X < -89)
                     Player.Rotation.X = -89;
@@ -195,13 +195,13 @@ namespace Minecraft
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (!mouseLocked) {
+            if (!mouseLocked && GUI.Scene == 1 || GUI.Scene == 2) {
                 LockMouse();
                 if (GUI.Scene == 1)
                     GUI.SetScene(0);
             }
             else if (GUI.Scene == 0)
-                Player.MouseDown(e.Button);
+                Player.OnMouseDown(e.Button);
 
             GUI.OnMouseDown(e.Button, e.Position);
         }

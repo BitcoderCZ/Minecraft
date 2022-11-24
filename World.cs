@@ -38,7 +38,7 @@ namespace Minecraft
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f, 0.4f, 0.35f, 18f, 0.6f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
+            new BiomeAttribs("plains", 60, 14, 0.2f, 0.4f, 0.35f, 18f, 0.65f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
                 new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
                                 new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
         };
@@ -127,9 +127,6 @@ namespace Minecraft
                 int count = 0;
                 while (modifications.Count > 0) {
                     BlockMod mod;
-                    /*lock (Structure.addLock) {
-                        mod = modifications.de();
-                    }*/
                     while (!modifications.TryDequeue(out mod)) { }
                     Flat2i cp = BlockToChunk(mod.Pos);
 
@@ -170,11 +167,16 @@ namespace Minecraft
             Console.WriteLine("WORLD:GENERATE:START");
 
             UIImage loadBar = (UIImage)GUI.elements[2];
+            UIImage smallLoadBar = (UIImage)GUI.elements[5];
 
             float max = 800f;
             float length = 0f;
             float step = (1f / ((float)BlockData.RenderDistance * (float)BlockData.RenderDistance)) * max;
             step /= 4f;
+
+            float smallMax = 600f;
+            float smallStep = (1f / 2f) * smallMax;
+            float smallLength = 0f;
 
             for (int x = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; x < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; x++)
                 for (int z = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; z++) {
@@ -189,7 +191,15 @@ namespace Minecraft
                     }
                 }
 
-            while (modifications.Count > 0) {
+            smallLength += smallStep;
+            smallLoadBar.PixWidth = (int)smallLength;
+
+            step = (1f / modifications.Count) * max;
+            length = 0f;
+            loadBar.PixWidth = (int)length;
+
+            int modStartCount = modifications.Count;
+            for (int i = 0; i < modStartCount; i++) {
                 BlockMod mod;
                 while (!modifications.TryDequeue(out mod)) { }
                 Flat2i cp = BlockToChunk(mod.Pos);
@@ -203,7 +213,13 @@ namespace Minecraft
 
                 if (!chunksToUpdate.Contains(cp))
                     chunksToUpdate.Add(cp);
+
+                length += step;
+                loadBar.PixWidth = (int)length;
             }
+
+            smallLength += smallStep;
+            smallLoadBar.PixWidth = (int)smallLength;
 
             while (chunksToUpdate.Count > 0) {
                 Flat2i cp = chunksToUpdate[0];
@@ -354,9 +370,7 @@ namespace Minecraft
             // Tree pass
             if (y == terrainHeight) {
                 if (Noise.Get2DPerlinNoise(vec2, -700f, biomes[0].treeZoneScale) > biomes[0].treeZoneThreashold) {
-                    blockId = 7;
                     if (Noise.Get2DPerlinNoise(vec2, 1200f, biomes[0].treePlacementScale) > biomes[0].treePlacementThreashold) {
-                        blockId = 1;
                         Structure.MakeTree(new Vector3i(x, y, z), modifications, 5, 9);
                     }
                 }

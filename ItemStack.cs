@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    public struct ItemStack
+    public class ItemStack
     {
         public uint id;
-        public byte count;
+        public byte amount;
 
-        public ItemStack(uint _id, byte _count)
+        public ItemStack(uint _id, byte _amount)
         {
             id = _id;
-            count = _count;
+            amount = _amount;
         }
     }
 }

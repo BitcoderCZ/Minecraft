@@ -92,9 +92,11 @@ namespace Minecraft.Graphics.UI
                 }, // Pause menu
                 new List<IGUIElement> { 
                     UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
-                    UIImage.CreatePixel(new Vector2i(230, 230), new Vector2i(820, 60), Textures["Black"]), // loading bar
-                    UIImage.CreatePixel(new Vector2i(240, 240), new Vector2i(1, 40), Textures["Green"]), // loading bar
+                    UIImage.CreatePixel(new Vector2i(230, 250), new Vector2i(820, 60), Textures["Black"]), // loading bar
+                    UIImage.CreatePixel(new Vector2i(240, 260), new Vector2i(0, 40), Textures["Green"]), // loading bar
                     UItext.CreateCenter("Loading...", 0, 50, 5f, font),
+                    UIImage.CreatePixel(new Vector2i(335, 200), new Vector2i(610, 40), Textures["Black"]), // small loading bar
+                    UIImage.CreatePixel(new Vector2i(340, 205), new Vector2i(0, 30), Textures["Green"]), // small loading bar
                 }, // Loading
                 new List<IGUIElement>
                 {
@@ -102,27 +104,32 @@ namespace Minecraft.Graphics.UI
                 }, // Inventory
             };
 
-            float scale = 2.5f;
             int numbSlots = 9;
-            slotSize = (Vector2i)(new Vector2(24, 24) * scale);
-            iteminslotSize = (Vector2i)(new Vector2(16, 16) * scale);
+            slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
+            iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
             iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
             backSize = new Vector2i(4 + numbSlots * slotSize.X, slotSize.Y + 4);
             backPos = new Vector2i((int)Util.Width / 2 - backSize.X / 2, 20);
 
-            UIImage[] icons = new UIImage[numbSlots];
+            UIItemSlot[] slots = new UIItemSlot[numbSlots];
             for (int i = 0; i < numbSlots; i++) {
-                Scenes[0].Add(UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2), slotSize, Textures["ItemSlotBG"], 0.5f));
-                UIImage icon = UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X + iteminslotOffset.X, backPos.Y + 2 + iteminslotOffset.Y),
-                    iteminslotSize, Textures["Transparent"], 0.6f);
-                icons[i] = icon;
-                Scenes[0].Add(icon);
+                slots[i] = new UIItemSlot(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2));
+                Scenes[0].Add(slots[i]);
             }
+                /*UIImage[] icons = new UIImage[numbSlots];
+                for (int i = 0; i < numbSlots; i++) {
+                    Scenes[0].Add(UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2), slotSize, Textures["ItemSlotBG"], 0.5f));
+                    UIImage icon = UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X + iteminslotOffset.X, backPos.Y + 2 + iteminslotOffset.Y),
+                        iteminslotSize, Textures["Transparent"], 0.6f);
+                    icons[i] = icon;
+                    Scenes[0].Add(icon);
+                }*/
 
-            UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) * scale), Textures["ToolbarHighlight"]);
+            UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) 
+                * BlockData.GUIScale), Textures["ToolbarHighlight"]);
             Scenes[0].Add(highlight);
 
-            Toolbar.Init(highlight, icons);
+            Toolbar.Init(highlight, slots);
         }
 
         private static void LoadColorTextures()
@@ -165,8 +172,10 @@ namespace Minecraft.Graphics.UI
 
         public static void Render(Shader uiShader)
         {
-            if (Scene == 2)
+            if (Scene == 2) {
                 (elements[2] as UIImage).UpdateVerts();
+                (elements[5] as UIImage)?.UpdateVerts();
+            }
             uiShader.Bind();
             for (int i = 0; i < elements.Count; i++) {
                 elements[i].Render(uiShader);

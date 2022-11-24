@@ -13,32 +13,36 @@ namespace Minecraft
     {
         static UIImage highlight;
 
-        static ItemSlot[] slots;
+        public static ItemSlot[] slots;
 
-        static int slotIndex;
+        public static int slotIndex;
 
-        public static void Init(UIImage _highlight, UIImage[] _icons)
+        public static void Init(UIImage _highlight, UIItemSlot[] _icons)
         {
             highlight = _highlight;
             slots = new ItemSlot[_icons.Length];
             for (int i = 0; i < slots.Length; i++)
-                slots[i] = new ItemSlot(0, _icons[i]);
+                slots[i] = new ItemSlot(_icons[i]);
 
             for (uint i = 0; i < slots.Length; i++)
-                SetSlot(i, i + 1);
+                SetSlot(i, i + 1, 64);
 
-            SetSlot((uint)slots.Length - 1, 17);
-
-            Player.selectedItem = slots[slotIndex].itemID;
+            SetSlot((uint)slots.Length - 1, 17, 64);
         }
 
-        private static void SetSlot(uint slot, uint item)
+        private static void SetSlot(uint slot, uint item, byte amount)
         {
-            slots[slot].itemID = item;
             if (item == 0)
-                slots[slot].icon.textureID = GUI.Textures["Transparent"];
-            else
-                slots[slot].icon.textureID = Texture.items[item];
+                slots[slot].EmptySlot();
+            else if (!slots[slot].HasItem) {
+                slots[slot].stack = new ItemStack(item, amount);
+                slots[slot].uIItemSlot.UpdateSlot();
+            }
+            else {
+                slots[slot].stack.id = item;
+                slots[slot].stack.amount = amount;
+                slots[slot].uIItemSlot.UpdateSlot();
+            }
         }
 
         private static void SetHighlight(int slot)
@@ -59,17 +63,15 @@ namespace Minecraft
                 slotIndex = slots.Length - 1;
 
             SetHighlight(slotIndex);
-
-            Player.selectedItem = slots[slotIndex].itemID;
         }
     }
 
-    public struct ItemSlot
+    public class _ItemSlot
     {
         public uint itemID;
         public UIImage icon;
 
-        public ItemSlot(uint _itemID, UIImage _icon)
+        public _ItemSlot(uint _itemID, UIImage _icon)
         {
             itemID = _itemID;
             icon = _icon;

@@ -33,10 +33,6 @@ namespace Minecraft
         private static bool isGrounded;
         private static bool isSneaking;
 
-        private static Vector3 lastFramePos;
-        private static Vector3 lastlastFramePos;
-        private static bool sneakBlockedLastFrame;
-
         public static Vector3 Position = Vector3.Zero;
         public static Vector3 Rotation;
         private static Vector3 velocity;
@@ -45,7 +41,6 @@ namespace Minecraft
 
         private static float checkIncrement = 0.05f;
         private static float reach = 8f;
-        public static uint selectedItem = 1;
 
         private static RenderObject highlightblock;
         private static Vector3 placeBlock;
@@ -98,36 +93,6 @@ namespace Minecraft
 
                 jumpRequest = false;
 
-                Console.SetCursorPosition(0, 10);
-                Console.Write(WillFall(new Vector3(velocity.X, 0f, 0f)));
-                Console.SetCursorPosition(0, 11);
-                Console.Write(WillFall(new Vector3(velocity.Z, 0f, 0f)));
-
-                /*if (sneakBlockedLastFrame && isSneaking && !isGrounded && verticalMomentum <= 0f) {
-
-                    velocity = Vector3.Zero;
-                    Position = lastlastFramePos;
-                    verticalMomentum = 0f;
-                    sneakBlockedLastFrame = true;
-                }
-                else if (isSneaking && isGrounded) {
-                    bool l = false;
-                    if (WillFall(new Vector3(velocity.X, 0f, 0f))) {
-                        velocity.X = 0f;
-                        l = true;
-                    }
-                    if (WillFall(new Vector3(velocity.Z, 0f, 0f))) {
-                        velocity.Z = 0f;
-                        l = true;
-                    }
-                    sneakBlockedLastFrame = l;
-                }
-                else
-                    sneakBlockedLastFrame = false;*/
-
-                lastlastFramePos = lastFramePos;
-                lastFramePos = Position;
-
                 Position += velocity;
 
                 if (velocity.X > velocity.Z) {
@@ -145,7 +110,6 @@ namespace Minecraft
                         Position.X -= velocity.X;
                     }
                 }
-
 
                 Console.Title = $"Player pos: {Position}, Player Velocity: {velocity}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}, scene: {GUI.Scene}";
                 /*if (keyboardState.IsKeyDown(Key.W)) // flying
@@ -235,13 +199,13 @@ namespace Minecraft
             }
         }
 
-        public static void MouseDown(MouseButton button)
+        public static void OnMouseDown(MouseButton button)
         {
             if (button == MouseButton.Left && highlightblock.Active) {
                 Vector3i block = (Vector3i)highlightblock.Position;
                 block += Vector3i.One;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(block, 0, true);
-            } else if (button == MouseButton.Right && placeBlock != -Vector3.One && selectedItem != 0) {
+            } else if (button == MouseButton.Right && placeBlock != -Vector3.One && Toolbar.slots[Toolbar.slotIndex].HasItem) {
                 Vector3 block = placeBlock;
                 Vector3i v = new Vector3i(MathPlus.RoundToInt(block.X), MathPlus.RoundToInt(block.Y), MathPlus.RoundToInt(block.Z));
                 if (v.Y >= BlockData.ChunkHeight 
@@ -251,7 +215,8 @@ namespace Minecraft
                     || v == (Vector3i)(Position + new Vector3(-playerWidth, 0.01f, 0f)) || v == (Vector3i)(Position + new Vector3(-playerWidth, 0f, 0f)) + new Vector3i(0, 1, 0)
                     || v == (Vector3i)(Position + new Vector3(0f, 0.01f, -playerWidth)) || v == (Vector3i)(Position + new Vector3(0f, 0f, -playerWidth)) + new Vector3i(0, 1, 0))
                     return;
-                World.GetChunkFromBlock(block).SetBlockGlobalPos(v, selectedItem, true);
+                World.GetChunkFromBlock(block).SetBlockGlobalPos(v, Toolbar.slots[Toolbar.slotIndex].ItemId, true);
+                Toolbar.slots[Toolbar.slotIndex].Take(1);
             }
         }
 

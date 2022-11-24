@@ -50,6 +50,8 @@ namespace Minecraft.Graphics.UI
 
         public void UpdateMesh()
         {
+            chars = new UIImage[Text.Length];
+
             float xOff = 0f;
             float maxHeight = 0f;
 

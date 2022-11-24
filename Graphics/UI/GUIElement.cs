@@ -14,6 +14,28 @@ namespace Minecraft.Graphics.UI
     {
         public Vector3 Position { get; set; }
 
+        public int PixX
+        {
+            get => (int)(((Position.X + 1f) / 2f) * (float)Util.Width); // Width is 0 - 2
+            set => Position = new Vector3((((float)value / (float)Util.Width) * 2f) - 1f, Position.Y, Position.Z);
+        }
+        public int PixY
+        {
+            get => (int)(((Position.Y + 1f) / 2f) * (float)Util.Height); // Width is 0 - 2
+            set => Position = new Vector3(Position.X, (((float)value / (float)Util.Height) * 2f) - 1f, Position.Z);
+        }
+
+        public int PixWidth
+        {
+            get => (int)((Width / 2f) * (float)Util.Width); // Width is 0 - 2
+            set => Width = ((float)value / (float)Util.Width) * 2f;
+        }
+        public int PixHeight
+        {
+            get => (int)((Height / 2f) * (float)Util.Height); // Width is 0 - 2
+            set => Height = ((float)value / (float)Util.Height) * 2f;
+        }
+
         public float Width { get; set; }
         public float Height { get; set; }
 
@@ -44,11 +66,11 @@ namespace Minecraft.Graphics.UI
 
         protected virtual void UploadMesh()
         {
-            GL.NamedBufferData(ebo, triangles.Length * sizeof(uint), triangles, BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(ebo, triangles.Length * sizeof(uint), triangles, BufferUsageHint.StaticDraw);
             GL.VertexArrayElementBuffer(vao, ebo);
 
             int vertexBindingPoint = 0;
-            GL.NamedBufferData(vbo, vertices.Length * Vertex2D.Size, vertices, BufferUsageHint.DynamicDraw);
+            GL.NamedBufferData(vbo, vertices.Length * Vertex2D.Size, vertices, BufferUsageHint.StaticDraw);
             GL.VertexArrayVertexBuffer(vao, vertexBindingPoint, vbo, IntPtr.Zero, Vertex2D.Size);
 
             // pos
