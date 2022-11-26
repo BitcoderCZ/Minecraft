@@ -2,10 +2,12 @@
 using Minecraft.Graphics.UI;
 using Minecraft.Math;
 using OpenTK;
+using OpenTK.Graphics;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -63,6 +65,11 @@ namespace Minecraft
 
         public static bool InUI { get => GUI.Scene != 0; }
 
+        public static float globalLight = 0.0f;
+        private static Vector4 dayColor = new Vector4(0f, 1f, 0.98f, 1f);
+        private static Vector4 nightColor = new Vector4(0f, 0f, 0.25f, 1f);
+        public static Color4 SkyColor = Color.Cyan;
+
         static World()
         {
             Generated = false;
@@ -82,6 +89,8 @@ namespace Minecraft
         {
             Console.SetCursorPosition(0, 6);
             Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}, Scene: {GUI.Scene}        ");
+            Vector4 lerp =  Vector4.Lerp(dayColor, nightColor, globalLight * (1f / 0.9f));
+            SkyColor = new Color4(lerp.X, lerp.Y, lerp.Z, lerp.W);
 
             if (InUI)
                 return;
@@ -405,6 +414,7 @@ namespace Minecraft
 
         public static void Render(Shader s)
         {
+            s.UploadFloat("globalLight", globalLight);
             for (int x = 0; x < BlockData.WorldSizeInChunks; x++)
                 for (int z = 0; z < BlockData.WorldSizeInChunks; z++)
                     if (chunks[x, z] != null)

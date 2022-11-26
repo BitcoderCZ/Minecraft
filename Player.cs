@@ -196,6 +196,10 @@ namespace Minecraft
                     Program.Window.CenterCursor();
                     Program.Window.LockMouse();
                 }
+            } else if (key == Key.Escape && GUI.Scene == 3) {
+                GUI.SetScene(0);
+                Program.Window.CenterCursor();
+                Program.Window.LockMouse();
             }
         }
 

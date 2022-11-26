@@ -85,6 +85,12 @@ namespace Minecraft.Graphics
             GL.Uniform1(loc, val);
         }
 
+        public void UploadFloat(string name, float val)
+        {
+            int loc = GetVarLocation(this, name);
+            GL.Uniform1(loc, val);
+        }
+
         public void UploadMat4(string name, ref Matrix4 val)
         {
             GL.UniformMatrix4(GetVarLocation(this, name), false, ref val);

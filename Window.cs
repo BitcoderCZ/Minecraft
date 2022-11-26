@@ -94,8 +94,6 @@ namespace Minecraft
         {
             if (id == 131185)
                 return;
-            /*byte[] managedArray = new byte[length];
-            Marshal.Copy(message, managedArray, 0, length);*/
             string message = Marshal.PtrToStringAnsi(_message, length);
             Console.WriteLine($"MessageCallback: Source:{source}, Type:{type}, id:{id}, " +
                 $"Severity:{severity}, Message: {message}");
@@ -138,13 +136,6 @@ namespace Minecraft
 
             World.Update();
 
-            // Other keyboard
-            if (keyboardState.IsKeyDown(Key.Escape) && GUI.Scene != 3) {
-                UnlockMouse();
-                if (GUI.Scene == 0)
-                    GUI.SetScene(1);
-            }
-
             float FPS = 1f / delta;
 
             halfSecondUpdate += delta;
@@ -158,7 +149,7 @@ namespace Minecraft
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            GL.ClearColor(Color.Cyan);
+            GL.ClearColor(World.SkyColor);
             GL.DepthMask(true);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -186,6 +177,11 @@ namespace Minecraft
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
+            if (keyboardState.IsKeyDown(Key.Escape) && GUI.Scene != 3) {
+                UnlockMouse();
+                if (GUI.Scene == 0)
+                    GUI.SetScene(1);
+            }
             GUI.OnKeyDown(e.Key, e.Modifiers);
             Player.OnKeyDown(e.Key, e.Modifiers);
             DragAndDropHandler.OnKeyDown(e.Key);
