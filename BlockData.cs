@@ -23,7 +23,7 @@ namespace Minecraft
 
 		public const int RenderDistance = 2;
 
-		public const string Version = "v1.0.1.6";
+		public const string Version = "v1.0.1.7";
 
 		public const float GUIScale = 2.5f;
 
