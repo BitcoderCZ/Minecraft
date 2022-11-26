@@ -14,8 +14,12 @@ namespace Minecraft
         public const int ChunkHeight = 128;
         public const int ChunkLayerLength = ChunkWidth * ChunkWidth;
 		public const int WorldSizeInChunks = 50;
-
 		public const int WorldSizeInBlocks = ChunkWidth * WorldSizeInChunks;
+
+		// Lighting
+		public const float minLightLevel = 0.05f;
+		public const float maxLightLevel = 0.9f;
+		public const float lightFalloff = 0.08f;
 
 		public const int RenderDistance = 2;
 

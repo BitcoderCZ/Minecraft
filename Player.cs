@@ -51,7 +51,7 @@ namespace Minecraft
 
             Util.CreateCube(1.1f, out TexVertex[] verts, out uint[] tris);
             DirectBitmap db = new DirectBitmap(16, 16);
-            db.Clear(Color.FromArgb(255 / 4, 255, 255, 255));
+            db.Clear(Color.FromArgb(255 / 6, 255, 255, 255));
             Texture solidWhite = new Texture(db);
             highlightblock = new RenderObject(verts, tris, solidWhite.id);
             highlightblock.Active = false;
@@ -224,7 +224,7 @@ namespace Minecraft
             } else if (button == MouseButton.Middle && highlightblock.Active) {
                 Vector3i block = (Vector3i)highlightblock.Position;
                 block += Vector3i.One;
-                uint blockId = World.GetChunkFromBlock(block).GetBlockGlobalPos(block);
+                uint blockId = World.GetChunkFromBlock(block).GetBlockGlobalPos(block).id;
                 if (Toolbar.ContainsItem(blockId, out int index)) {
                     Toolbar.slotIndex = index;
                     Toolbar.SetHighlight();

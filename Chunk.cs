@@ -20,7 +20,7 @@ namespace Minecraft
         Vertex[] vertsA;
         uint[] trisA;
 
-        public readonly uint[] blocks;
+        public readonly BlockState[] blocks;
 
         public Queue<BlockMod> modifications = new Queue<BlockMod>();
 
@@ -50,7 +50,7 @@ namespace Minecraft
             CreatedMeshArrays = false;
             chunkPos = _position;
             pos = new Flat2i(chunkPos.X * BlockData.ChunkWidth, chunkPos.Z * BlockData.ChunkWidth);
-            blocks = new uint[BlockData.ChunkLayerLength * BlockData.ChunkHeight];
+            blocks = new BlockState[BlockData.ChunkLayerLength * BlockData.ChunkHeight];
 
             if (generate)
                 Init();
@@ -60,6 +60,7 @@ namespace Minecraft
         {
             GenerateBlocks();
             ClearMeshData();
+            CalcLight();
             CreateMeshData();
             vertsA = vertices.ToArray();
             trisA = triangles.ToArray();
@@ -76,6 +77,7 @@ namespace Minecraft
             }
 
             ClearMeshData();
+            CalcLight();
             CreateMeshData();
             vertsA = vertices.ToArray();
             trisA = triangles.ToArray();
@@ -83,12 +85,57 @@ namespace Minecraft
                 CreatedMesh = 2;
         }
 
+        private void CalcLight()
+        {
+            Queue<Vector3i> litBlocks = new Queue<Vector3i>();
+
+            for (int x = 0; x < BlockData.ChunkWidth; x++)
+                for (int z = 0; z < BlockData.ChunkWidth; z++) {
+                    float lightRay = 1f;
+
+                    for (int y = BlockData.ChunkHeight - 1; y >= 0; y--) {
+                        int index = x + (z * BlockData.ChunkWidth) + (y * BlockData.ChunkLayerLength);
+                        BlockState thisBlock = blocks[index];
+
+                        if (thisBlock.id > 0 && World.blocktypes[thisBlock.id].transparency < lightRay)
+                            lightRay = World.blocktypes[thisBlock.id].transparency;
+
+                        thisBlock.globalLightPercent = lightRay;
+                        blocks[index] = thisBlock;
+
+                        if (lightRay > BlockData.lightFalloff)
+                            litBlocks.Enqueue(new Vector3i(x, y, z));
+                    }
+                }
+
+            while (litBlocks.Count > 0) {
+                Vector3i v = litBlocks.Dequeue();
+                int vIndex = v.X + (v.Z * BlockData.ChunkWidth) + (v.Y * BlockData.ChunkLayerLength);
+
+                for (int p = 0; p < 6; p++) {
+                    Vector3i neighbor = v + BlockData.faceChecks[p];
+                    int neighborIndex = neighbor.X + (neighbor.Z * BlockData.ChunkWidth) + (neighbor.Y * BlockData.ChunkLayerLength);
+
+                    if (IsBlockInChunk(neighbor)) {
+                        if (blocks[neighborIndex].globalLightPercent < blocks[vIndex].globalLightPercent - BlockData.lightFalloff) {
+                            blocks[neighborIndex].globalLightPercent = blocks[vIndex].globalLightPercent - BlockData.lightFalloff;
+
+                            if (blocks[neighborIndex].globalLightPercent > BlockData.lightFalloff)
+                                litBlocks.Enqueue(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+
         private void GenerateBlocks()
         {
             for (int x = 0; x < BlockData.ChunkWidth; x++)
                 for (int z = 0; z < BlockData.ChunkWidth; z++)
                     for (int y = 0; y < BlockData.ChunkHeight; y++) {
-                        SetBlock(x, y, z, World.GetGenBlock(new Vector3i(x, y, z) + pos), false);
+                        blocks[x + (z * BlockData.ChunkWidth) + (y * BlockData.ChunkLayerLength)] =
+                            new BlockState(World.GetGenBlock(new Vector3i(x, y, z) + pos));
+                        //SetBlock(x, y, z, World.GetGenBlock(new Vector3i(x, y, z) + pos), false);
                     }
 
             BlocksGenerated = true;
@@ -100,6 +147,7 @@ namespace Minecraft
                 for (int x = 0; x < BlockData.ChunkWidth; x++)
                     for (int z = 0; z < BlockData.ChunkWidth; z++) {
                         uint blockId = GetBlock(x, y, z);
+                            
                         if (blockId != 0)
                             AddBlockMeshData(new Vector3i(x, y, z), blockId);
                     }
@@ -115,24 +163,12 @@ namespace Minecraft
         void AddBlockMeshData(Vector3i pos, uint blockId)
         {
             for (int p = 0; p < 6; p++) {
-                if (CheckBlock(pos + BlockData.faceChecks[p]) && GetBlock(pos) != World.GetBlock(pos + BlockData.faceChecks[p] + this.pos)) {
+                BlockState? neighbor = CheckBlock(pos + BlockData.faceChecks[p]);
+
+                if (neighbor.HasValue && World.blocktypes[neighbor.Value.id].renderNeighborFaces && GetBlock(pos) != World.GetBlock(pos + BlockData.faceChecks[p] + this.pos)) {
                     uint texId = World.blocktypes[blockId].GetTextureID(p);
 
-                    float lightLevel;
-                    int yPos = pos.Y + 1;
-                    bool inShade = false;
-                    while (yPos < BlockData.ChunkHeight) {
-                        if (blocks[pos.X + (pos.Z * BlockData.ChunkWidth) + (yPos * BlockData.ChunkLayerLength)] != 0) {
-                            inShade = true;
-                            break;
-                        }
-                        yPos++;
-                    }
-
-                    if (inShade)
-                        lightLevel = 0.4f;
-                    else
-                        lightLevel = 0.0f;
+                    float lightLevel = neighbor.Value.globalLightPercent;
 
                     Vector4 color = new Vector4(0f, 0f, 0f, lightLevel);
 
@@ -223,7 +259,7 @@ namespace Minecraft
             if (!IsBlockInChunk(X, Y, Z))
                 return;
 
-            blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)] = id;
+            blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)].id = id;
 
             if (updateMesh) {
                 UpdateMesh();
@@ -238,19 +274,19 @@ namespace Minecraft
             if (!IsBlockInChunk(X, Y, Z))
                 return 0;
 
-            return blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)];
+            return blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)].id;
         }
         public uint GetBlock(Vector3i pos)
             => GetBlock(pos.X, pos.Y, pos.Z);
 
-        public bool CheckBlock(int X, int Y, int Z)
+        public BlockState? CheckBlock(int X, int Y, int Z)
         {
             if (!IsBlockInChunk(X, Y, Z))
-                return World.CheckIfBlockTransparent(X + pos.X, Y, Z + pos.Z);
+                return World.GetBlockState(X + pos.X, Y, Z + pos.Z);
 
-            return World.blocktypes[blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)]].isTransparent;
+            return blocks[X + (Z * BlockData.ChunkWidth) + (Y * BlockData.ChunkLayerLength)];
         }
-        public bool CheckBlock(Vector3i pos)
+        public BlockState? CheckBlock(Vector3i pos)
             => CheckBlock(pos.X, pos.Y, pos.Z);
 
         public bool IsBlockInChunk(int X, int Y, int Z)
@@ -263,12 +299,12 @@ namespace Minecraft
         public bool IsBlockInChunk(Vector3i pos)
            => IsBlockInChunk(pos.X, pos.Y, pos.Z);
 
-        public uint GetBlockGlobalPos(Vector3i _pos)
+        public BlockState GetBlockGlobalPos(Vector3i _pos)
         {
             _pos.X -= pos.X;
             _pos.Z -= pos.Z;
 
-            return GetBlock(_pos);
+            return blocks[_pos.X + (_pos.Z * BlockData.ChunkWidth) + (_pos.Y * BlockData.ChunkLayerLength)];
         }
 
         public void SetBlockGlobalPos(Vector3i _pos, uint id, bool updateMesh)

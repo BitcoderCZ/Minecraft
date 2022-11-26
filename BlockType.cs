@@ -2,11 +2,12 @@
 
 namespace Minecraft
 {
-    public struct BlockType
+    public class BlockType
     {
         public string blockName;
         public bool isSolid;
-        public bool isTransparent;
+        public bool renderNeighborFaces;
+        public float transparency;
         public int item;
 
         public uint backFaceTexture;
@@ -16,11 +17,12 @@ namespace Minecraft
         public uint leftFaceTexture;
         public uint rightFaceTexture;
 
-        public BlockType(string name, bool solid, bool transparent, uint back, uint front, uint top, uint bottom, uint left, uint right, int _item)
+        public BlockType(string name, bool solid, bool _renderNeighborFaces, float _transparency, uint back, uint front, uint top, uint bottom, uint left, uint right, int _item)
         {
             blockName = name;
             isSolid = solid;
-            isTransparent = transparent;
+            renderNeighborFaces = _renderNeighborFaces;
+            transparency = _transparency;
             backFaceTexture = back;
             frontFaceTexture = front;
             topFaceTexture = top;
@@ -30,7 +32,8 @@ namespace Minecraft
             item = _item;
         }
 
-        public BlockType(string name, bool solid, bool transparent, uint tex, int _item) : this(name, solid, transparent, tex, tex, tex, tex, tex, tex, _item)
+        public BlockType(string name, bool solid, bool _renderNeighborFaces, float _transparency, uint tex, int _item) 
+            : this(name, solid, _renderNeighborFaces, _transparency, tex, tex, tex, tex, tex, tex, _item)
         { }
 
         public uint GetTextureID(int faceIndex)

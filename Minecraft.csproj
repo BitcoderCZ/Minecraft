@@ -143,6 +143,7 @@
   <ItemGroup>
     <Compile Include="BiomeAttribs.cs" />
     <Compile Include="BlockMod.cs" />
+    <Compile Include="BlockState.cs" />
     <Compile Include="BlockType.cs" />
     <Compile Include="CreativeInventory.cs" />
     <Compile Include="DragAndDropHandler.cs" />
