@@ -15,12 +15,12 @@ namespace Minecraft
 
         public static void Init(ref List<IGUIElement> elements, Vector2i backPos, Vector2i slotSize, int numbSlots)
         {
-            int margin = (int)(6f * BlockData.GUIScale);
+            int margin = (int)(6f * World.Settings.GUIScale);
 
-            Vector2i startPos = new Vector2i(backPos.X, backPos.Y + slotSize.Y * 2);
-            Vector2i invBackPos = startPos - margin;
             Vector2i startSize = new Vector2i(slotSize.X * numbSlots, slotSize.Y * 5);
             Vector2i invBackSize = startSize + margin * 2;
+            Vector2i startPos = new Vector2i(backPos.X, /*backPos.Y + slotSize.Y * 2*/Program.Window.Height / 2 - startSize.Y / 2);
+            Vector2i invBackPos = startPos - margin;
             elements.Add(UIImage.CreatePixel(invBackPos, invBackSize, GUI.Textures["BlackTransparent"]));
 
             int x = 0;

@@ -8,8 +8,10 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,6 +19,8 @@ namespace Minecraft
 {
     public static class World
     {
+        public static Settings Settings;
+
         public static readonly BlockType[] blocktypes = new BlockType[]
         {
             new BlockType("air", false, true, 1f, 0, -1), // 0
@@ -70,13 +74,30 @@ namespace Minecraft
         private static Vector4 nightColor = new Vector4(0f, 0f, 0.25f, 1f);
         public static Color4 SkyColor = Color.Cyan;
 
-        static World()
+        public static void Init()
         {
             Generated = false;
             Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
-            seed = (uint)r.Next();
-            Noise.SetSeed(seed);
             spawnPos = new Vector3(BlockData.WorldSizeInBlocks / 2f, BlockData.ChunkHeight + 2f, BlockData.WorldSizeInBlocks / 2f);
+
+            string settingsPath = Environment.CurrentDirectory + "/Data/Settings.json";
+            if (!File.Exists(settingsPath)) {
+                Settings = new Settings();
+                File.WriteAllBytes(settingsPath, JsonSerializer.SerializeToUtf8Bytes(Settings));
+            }
+            else {
+                Settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath));
+                File.WriteAllBytes(settingsPath, JsonSerializer.SerializeToUtf8Bytes(Settings));
+            }
+
+            if (Settings.Seed == -1) {
+                seed = (uint)r.Next();
+                Noise.SetSeed(seed);
+            } else {
+                r = new Random(Settings.Seed);
+                seed = (uint)r.Next();
+                Noise.SetSeed(seed);
+            }
 
             createChunksThread = new Thread(new ThreadStart(CreateChunks));
             createChunksThread.Start();
@@ -85,7 +106,7 @@ namespace Minecraft
             applyModificationsThread.Start();
         }
 
-        public static void Update()
+        public static void Update(float delta)
         {
             Console.SetCursorPosition(0, 6);
             Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}, Scene: {GUI.Scene}        ");
@@ -100,6 +121,10 @@ namespace Minecraft
 
             if (chunksToUpdate.Count > 0)
                 UpdateChunks();
+
+            for (int i = 0; i < activeChunks.Count; i++) {
+                chunks[activeChunks[i].X, activeChunks[i].Z].Update(delta);
+            }
         }
 
         private static void CreateChunk()
@@ -131,8 +156,10 @@ namespace Minecraft
         private static void ApplyModifications()
         {
             while (Program.Window.Running) {
-                if (!Generated)
+                if (!Generated) {
+                    Thread.Sleep(10);
                     continue;
+                }
                 int count = 0;
                 while (modifications.Count > 0) {
                     BlockMod mod;
@@ -163,9 +190,8 @@ namespace Minecraft
         private static void CreateChunks()
         {
             while (Program.Window.Running) {
-                if (chunksToCreate.Count > 0) {
+                if (chunksToCreate.Count > 0)
                     CreateChunk();
-                }
 
                 Thread.Sleep(0);
             }
@@ -180,19 +206,18 @@ namespace Minecraft
 
             float max = 800f;
             float length = 0f;
-            float step = (1f / ((float)BlockData.RenderDistance * (float)BlockData.RenderDistance)) * max;
+            float step = (1f / ((float)Settings.RenderDistance * (float)Settings.RenderDistance)) * max;
             step /= 4f;
 
             float smallMax = 600f;
             float smallStep = (1f / 2f) * smallMax;
             float smallLength = 0f;
 
-            for (int x = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; x < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; x++)
-                for (int z = BlockData.WorldSizeInChunks / 2 - BlockData.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + BlockData.RenderDistance; z++) {
+            for (int x = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; x < BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; x++)
+                for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
-                        chunks[x, z] = new Chunk(pos, false);
-                        chunks[x, z].Init();
+                        chunks[x, z] = new Chunk(pos, true);
                         activeChunks.Add(pos);
 
                         length += step;
@@ -266,8 +291,10 @@ namespace Minecraft
 
             List<Flat2i> prevActiveChunks = new List<Flat2i>(activeChunks);
 
-            for (int x = playerChunk.X - BlockData.RenderDistance; x < playerChunk.X + BlockData.RenderDistance; x++)
-                for (int z = playerChunk.Z - BlockData.RenderDistance; z < playerChunk.Z + BlockData.RenderDistance; z++) {
+            activeChunks.Clear();
+
+            for (int x = playerChunk.X - Settings.RenderDistance; x < playerChunk.X + Settings.RenderDistance; x++)
+                for (int z = playerChunk.Z - Settings.RenderDistance; z < playerChunk.Z + Settings.RenderDistance; z++) {
                     if (!IsChunkInWorld(x, z))
                         continue;
 

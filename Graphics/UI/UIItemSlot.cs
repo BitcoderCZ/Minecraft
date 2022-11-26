@@ -25,11 +25,11 @@ namespace Minecraft.Graphics.UI
         {
             PixX = pos.X;
             PixY = pos.Y;
-            PixWidth = (int)(24f * BlockData.GUIScale);
-            PixHeight = (int)(24f * BlockData.GUIScale);
+            PixWidth = (int)(24f * World.Settings.GUIScale);
+            PixHeight = (int)(24f * World.Settings.GUIScale);
 
-            Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
-            Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
+            Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * World.Settings.GUIScale);
+            Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * World.Settings.GUIScale);
             Vector2i iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
 
             slotImage = new UIImage(Vector2.Zero, Vector2.Zero, GUI.Textures["ItemSlotBG"], false);
@@ -46,7 +46,7 @@ namespace Minecraft.Graphics.UI
             slotIcon.PixHeight = iteminslotSize.Y;
             slotIcon.UpdateVerts();
 
-            slotAmount = new UItext("", 0f, 0f, BlockData.GUIScale / 2f, Program.Window.font);
+            slotAmount = new UItext("", 0f, 0f, World.Settings.GUIScale / 2f, Program.Window.font);
             slotAmount.PixX = pos.X + iteminslotOffset.X;
             slotAmount.PixY = pos.Y + iteminslotOffset.Y;
         }
@@ -66,8 +66,8 @@ namespace Minecraft.Graphics.UI
 
         public void Move()
         {
-            Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
-            Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
+            Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * World.Settings.GUIScale);
+            Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * World.Settings.GUIScale);
             Vector2i iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
 
             if (slotImage != null)

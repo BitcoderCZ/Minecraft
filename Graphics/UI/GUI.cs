@@ -106,8 +106,8 @@ namespace Minecraft.Graphics.UI
             };
 
             int numbSlots = 9;
-            slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
-            iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
+            slotSize = (Vector2i)(new Vector2(24, 24) * World.Settings.GUIScale);
+            iteminslotSize = (Vector2i)(new Vector2(16, 16) * World.Settings.GUIScale);
             iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
             backSize = new Vector2i(4 + numbSlots * slotSize.X, slotSize.Y + 4);
             backPos = new Vector2i((int)Util.Width / 2 - backSize.X / 2, 20);
@@ -120,7 +120,7 @@ namespace Minecraft.Graphics.UI
             }
 
             UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) 
-                * BlockData.GUIScale), Textures["ToolbarHighlight"]);
+                * World.Settings.GUIScale), Textures["ToolbarHighlight"]);
             Scenes[0].Add(highlight);
 
             Toolbar.Init(highlight, slots);

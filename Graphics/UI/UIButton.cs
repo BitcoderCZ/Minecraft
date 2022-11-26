@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using OpenTK.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,8 @@ namespace Minecraft.Graphics.UI
         public float PadBottom;
         public float PadLeft;
         public float PadRight;
+
+        public Action<MouseButton> OnClick;
 
         public UIButton(string text, float x, float y, float textScale, Font font, int texID, bool mantainAspect = false, float padT = 0.05f, float padB = 0.05f, float padL = 0.05f, float padR = 0.05f)
         {
@@ -53,6 +56,12 @@ namespace Minecraft.Graphics.UI
         {
             uiImage.Render(s);
             uiText.Render(s);
+        }
+
+        public override void OnMouseDown(MouseButton button, bool onElement)
+        {
+            if (onElement)
+                OnClick?.Invoke(button);
         }
     }
 }

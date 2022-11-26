@@ -24,6 +24,9 @@ namespace Minecraft
 
         public Queue<BlockMod> modifications = new Queue<BlockMod>();
 
+        // Rise Anim
+        private float yOffset;
+
         public Flat2i chunkPos;
         public Flat2i pos;
         public bool Active
@@ -42,7 +45,7 @@ namespace Minecraft
         private int vbo;
         private int ebo;
 
-        public Chunk(Flat2i _position, bool generate)
+        public Chunk(Flat2i _position, bool _init)
         {
             active = false;
             BlocksGenerated = false;
@@ -52,8 +55,10 @@ namespace Minecraft
             pos = new Flat2i(chunkPos.X * BlockData.ChunkWidth, chunkPos.Z * BlockData.ChunkWidth);
             blocks = new BlockState[BlockData.ChunkLayerLength * BlockData.ChunkHeight];
 
-            if (generate)
+            if (_init)
                 Init();
+            else if(!_init && World.Settings.AnimatedChunks)
+                yOffset = -BlockData.ChunkHeight;
         }
 
         public void Init()
@@ -66,6 +71,15 @@ namespace Minecraft
             trisA = triangles.ToArray();
             CreatedMeshArrays = true;
             active = true;
+        }
+
+        public void Update(float delta)
+        {
+            if (CreatedMesh != 0 && yOffset < -0.05f) {
+                yOffset = Vector3.Lerp(new Vector3(0f, yOffset, 0f), Vector3.Zero, delta * World.Settings.AnimatedChunksSpeed).Y;
+            }
+            else if (CreatedMesh != 0 && yOffset >= -0.05f)
+                yOffset = 0f;
         }
 
         public void UpdateMesh() // UpdateChunk
@@ -233,7 +247,7 @@ namespace Minecraft
                 CreatedMesh = 1;
             }
 
-            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X, 0f, pos.Z));
+            Matrix4 transform = Matrix4.CreateTranslation(new Vector3(pos.X, yOffset, pos.Z));
             s.UploadMat4("uTransform", ref transform);
             GL.ActiveTexture(TextureUnit.Texture1);
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);

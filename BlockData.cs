@@ -10,7 +10,7 @@ namespace Minecraft
 {
     public static class BlockData
     {
-        public const int ChunkWidth = 16;
+		public const int ChunkWidth = 16;
         public const int ChunkHeight = 128;
         public const int ChunkLayerLength = ChunkWidth * ChunkWidth;
 		public const int WorldSizeInChunks = 50;
@@ -21,11 +21,7 @@ namespace Minecraft
 		public const float maxLightLevel = 0.9f;
 		public const float lightFalloff = 0.08f;
 
-		public const int RenderDistance = 2;
-
 		public const string Version = "v1.0.1.7";
-
-		public const float GUIScale = 2.5f;
 
 		public static readonly Vector3[] blockVerts = new Vector3[8] {
 			new Vector3(0.0f, 0.0f, 0.0f),

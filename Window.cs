@@ -67,6 +67,7 @@ namespace Minecraft
 
             Texture.CreateBlockTA();
             Texture.LoadItems();
+            World.Init();
             font = new Font("Minecraft", 32);
             GUI.Init(font);
 
@@ -107,8 +108,10 @@ namespace Minecraft
             if (mouseLocked) {
                 Point mouseDelta = System.Windows.Forms.Cursor.Position - new Size(lastMousePos);
                 if (mouseDelta != Point.Empty) {
-                    Player.Rotation.X += mouseDelta.Y * 0.25f;
-                    Player.Rotation.Y += -mouseDelta.X * 0.25f;
+                    if (GUI.Scene == 0) {
+                        Player.Rotation.X += mouseDelta.Y * World.Settings.MouseSensitivity * 0.25f;
+                        Player.Rotation.Y += -mouseDelta.X * World.Settings.MouseSensitivity * 0.25f;
+                    }
                     CenterCursor();
                 }
             }
@@ -134,7 +137,7 @@ namespace Minecraft
 
             DragAndDropHandler.Update();
 
-            World.Update();
+            World.Update(delta);
 
             float FPS = 1f / delta;
 

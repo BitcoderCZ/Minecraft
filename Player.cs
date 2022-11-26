@@ -181,7 +181,6 @@ namespace Minecraft
 
             if (isGrounded && keyboardState.IsKeyDown(Key.Space))
                 jumpRequest = true;
-
         }
 
         public static void OnKeyDown(Key key, KeyModifiers modifiers)
