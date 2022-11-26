@@ -217,6 +217,24 @@ namespace Minecraft
                     return;
                 World.GetChunkFromBlock(block).SetBlockGlobalPos(v, Toolbar.slots[Toolbar.slotIndex].ItemId, true);
                 Toolbar.slots[Toolbar.slotIndex].Take(1);
+            } else if (button == MouseButton.Middle && highlightblock.Active) {
+                Vector3i block = (Vector3i)highlightblock.Position;
+                block += Vector3i.One;
+                uint blockId = World.GetChunkFromBlock(block).GetBlockGlobalPos(block);
+                if (Toolbar.ContainsItem(blockId, out int index)) {
+                    Toolbar.slotIndex = index;
+                    Toolbar.SetHighlight();
+                }
+                else {
+                    if (Toolbar.AllOcupied || !Toolbar.slots[Toolbar.slotIndex].HasItem)
+                        Toolbar.slots[Toolbar.slotIndex].SetStack(new ItemStack(blockId, 64));
+                    else
+                        for (int i = 0; i < Toolbar.slots.Length; i++)
+                            if (!Toolbar.slots[i].HasItem) {
+                                Toolbar.slots[i].SetStack(new ItemStack(blockId, 64));
+                                break;
+                            }
+                }
             }
         }
 

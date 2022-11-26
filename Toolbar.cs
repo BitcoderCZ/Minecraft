@@ -17,6 +17,16 @@ namespace Minecraft
 
         public static int slotIndex;
 
+        public static bool AllOcupied
+        {
+            get {
+                for (int i = 0; i < slots.Length; i++)
+                    if (!slots[i].HasItem)
+                        return false;
+                return true;
+            }
+        }
+
         public static void Init(UIImage _highlight, UIItemSlot[] _icons)
         {
             highlight = _highlight;
@@ -25,9 +35,7 @@ namespace Minecraft
                 slots[i] = new ItemSlot(_icons[i]);
 
             for (uint i = 0; i < slots.Length; i++)
-                SetSlot(i, i + 1, 64);
-
-            SetSlot((uint)slots.Length - 1, 17, 64);
+                SetSlot(i, 0, 0);
         }
 
         private static void SetSlot(uint slot, uint item, byte amount)
@@ -45,9 +53,9 @@ namespace Minecraft
             }
         }
 
-        private static void SetHighlight(int slot)
+        public static void SetHighlight()
         {
-            highlight.Position = new Vector3(Util.PixelToGL(GUI.backPos.X + GUI.slotSize.X * slot, GUI.backPos.Y));
+            highlight.Position = new Vector3(Util.PixelToGL(GUI.backPos.X + GUI.slotSize.X * slotIndex, GUI.backPos.Y));
         }
 
         public static void MouseScrool(int scrool)
@@ -62,19 +70,19 @@ namespace Minecraft
             else if (slotIndex < 0)
                 slotIndex = slots.Length - 1;
 
-            SetHighlight(slotIndex);
+            SetHighlight();
         }
-    }
 
-    public class _ItemSlot
-    {
-        public uint itemID;
-        public UIImage icon;
-
-        public _ItemSlot(uint _itemID, UIImage _icon)
+        public static bool ContainsItem(uint itemId, out int index)
         {
-            itemID = _itemID;
-            icon = _icon;
+            index = -1;
+            for (int i = 0; i < slots.Length; i++)
+                if (slots[i].ItemId == itemId) {
+                    index = i;
+                    return true;
+                }
+
+            return false;
         }
     }
 }

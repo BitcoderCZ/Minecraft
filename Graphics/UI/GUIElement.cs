@@ -16,12 +16,12 @@ namespace Minecraft.Graphics.UI
 
         public int PixX
         {
-            get => (int)(((Position.X + 1f) / 2f) * (float)Util.Width); // Width is 0 - 2
+            get => (int)(((Position.X + 1f) / 2f) * (float)Util.Width); 
             set => Position = new Vector3((((float)value / (float)Util.Width) * 2f) - 1f, Position.Y, Position.Z);
         }
         public int PixY
         {
-            get => (int)(((Position.Y + 1f) / 2f) * (float)Util.Height); // Width is 0 - 2
+            get => (int)(((Position.Y + 1f) / 2f) * (float)Util.Height);
             set => Position = new Vector3(Position.X, (((float)value / (float)Util.Height) * 2f) - 1f, Position.Z);
         }
 
@@ -32,7 +32,7 @@ namespace Minecraft.Graphics.UI
         }
         public int PixHeight
         {
-            get => (int)((Height / 2f) * (float)Util.Height); // Width is 0 - 2
+            get => (int)((Height / 2f) * (float)Util.Height); // Height is 0 - 2
             set => Height = ((float)value / (float)Util.Height) * 2f;
         }
 
@@ -81,6 +81,15 @@ namespace Minecraft.Graphics.UI
             GL.VertexArrayAttribFormat(vao, 1, 2, VertexAttribType.Float, false, 3 * sizeof(float));
             GL.VertexArrayAttribBinding(vao, 1, vertexBindingPoint);
             GL.EnableVertexArrayAttrib(vao, 1);
+        }
+
+        ~GUIElement()
+        {
+            /*GL.DeleteBuffer(ebo);
+            GL.DeleteBuffer(vbo);
+            GL.DeleteVertexArray(vao);*/
+            vertices = null;
+            triangles = null;
         }
     }
 }

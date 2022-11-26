@@ -32,8 +32,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.html</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>2</ApplicationRevision>
-    <ApplicationVersion>1.0.1.2</ApplicationVersion>
+    <ApplicationRevision>6</ApplicationRevision>
+    <ApplicationVersion>1.0.1.6</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -118,6 +118,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=4.0.4.1, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>packages\System.Runtime.CompilerServices.Unsafe.4.5.3\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
@@ -143,7 +144,9 @@
     <Compile Include="BiomeAttribs.cs" />
     <Compile Include="BlockMod.cs" />
     <Compile Include="BlockType.cs" />
-    <Compile Include="Font.cs" />
+    <Compile Include="CreativeInventory.cs" />
+    <Compile Include="DragAndDropHandler.cs" />
+    <Compile Include="Graphics\Font.cs" />
     <Compile Include="GLGetVersion.cs" />
     <Compile Include="Graphics\UI\GUI.cs" />
     <Compile Include="Graphics\IRenderObject.cs" />

@@ -23,6 +23,11 @@ namespace Minecraft.Graphics.UI
 
         public UIItemSlot(Vector2i pos)
         {
+            PixX = pos.X;
+            PixY = pos.Y;
+            PixWidth = (int)(24f * BlockData.GUIScale);
+            PixHeight = (int)(24f * BlockData.GUIScale);
+
             Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
             Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
             Vector2i iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
@@ -59,6 +64,21 @@ namespace Minecraft.Graphics.UI
             slot = null;
         }
 
+        public void Move()
+        {
+            Vector2i slotSize = (Vector2i)(new Vector2(24, 24) * BlockData.GUIScale);
+            Vector2i iteminslotSize = (Vector2i)(new Vector2(16, 16) * BlockData.GUIScale);
+            Vector2i iteminslotOffset = new Vector2i(slotSize.X / 2 - iteminslotSize.X / 2, slotSize.Y / 2 - iteminslotSize.Y / 2);
+
+            if (slotImage != null)
+                slotImage.Position = Position;
+            slotIcon.PixX = PixX + iteminslotOffset.X;
+            slotIcon.PixY = PixY + iteminslotOffset.Y;
+            slotAmount.PixX = PixX + iteminslotOffset.X;
+            slotAmount.PixY = PixY + iteminslotOffset.Y;
+            slotAmount.SetPos();
+        }
+
         public void UpdateSlot()
         {
             if (HasItem) {
@@ -82,7 +102,8 @@ namespace Minecraft.Graphics.UI
 
         public override void Render(Shader s)
         {
-            slotImage.Render(s);
+            if (slotImage != null)
+                slotImage.Render(s);
             slotIcon.Render(s);
             slotAmount.Render(s);
         }

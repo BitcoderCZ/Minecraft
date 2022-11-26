@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -30,6 +31,11 @@ namespace Minecraft.Math
         public static Vector2i operator /(Vector2i a, Vector2i b)
             => new Vector2i(a.X / b.X, a.Y / b.Y);
 
+        public static Vector2i operator +(Vector2i a, int b)
+            => new Vector2i(a.X + b, a.Y + b);
+        public static Vector2i operator -(Vector2i a, int b)
+            => new Vector2i(a.X - b, a.Y - b);
+
         public static Vector2i operator *(Vector2i a, int b)
             => new Vector2i(a.X * b, a.Y * b);
         public static Vector2i operator /(Vector2i a, int b)
@@ -48,6 +54,11 @@ namespace Minecraft.Math
             => new Vector2((float) a.X, (float) a.Y);
         public static explicit operator Vector2i(Vector2 a)
             => new Vector2i((int)a.X, (int)a.Y);
+
+        public static implicit operator Vector2i(Point a)
+            => new Vector2i(a.X, a.Y);
+        public static implicit operator Point(Vector2i a)
+            => new Point(a.X, a.Y);
 
         public static bool operator ==(Vector2i a, Vector2i b)
             => a.X == b.X && a.Y == b.Y;

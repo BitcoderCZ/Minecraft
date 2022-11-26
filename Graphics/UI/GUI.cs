@@ -84,12 +84,12 @@ namespace Minecraft.Graphics.UI
             {
                 new List<IGUIElement> {
                     UIImage.CreateCenter(0.06f, 0.06f, Textures["Crosshair"], true),
-                }, // In Game
+                }, // In Game 0
                 new List<IGUIElement> {
                     new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false),
                     UItext.CreateCenter("Game Menu", 0, 350, 3f, font),
                     new UIButton("Give Feedback", 0f, 0f, 1.8f, font, Textures["Button"]),
-                }, // Pause menu
+                }, // Pause menu 1
                 new List<IGUIElement> { 
                     UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
                     UIImage.CreatePixel(new Vector2i(230, 250), new Vector2i(820, 60), Textures["Black"]), // loading bar
@@ -97,11 +97,12 @@ namespace Minecraft.Graphics.UI
                     UItext.CreateCenter("Loading...", 0, 50, 5f, font),
                     UIImage.CreatePixel(new Vector2i(335, 200), new Vector2i(610, 40), Textures["Black"]), // small loading bar
                     UIImage.CreatePixel(new Vector2i(340, 205), new Vector2i(0, 30), Textures["Green"]), // small loading bar
-                }, // Loading
+                }, // Loading 2
                 new List<IGUIElement>
                 {
+                    new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false),
 
-                }, // Inventory
+                }, // Inventory 3
             };
 
             int numbSlots = 9;
@@ -115,21 +116,31 @@ namespace Minecraft.Graphics.UI
             for (int i = 0; i < numbSlots; i++) {
                 slots[i] = new UIItemSlot(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2));
                 Scenes[0].Add(slots[i]);
+                Scenes[3].Add(slots[i]);
             }
-                /*UIImage[] icons = new UIImage[numbSlots];
-                for (int i = 0; i < numbSlots; i++) {
-                    Scenes[0].Add(UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X, backPos.Y + 2), slotSize, Textures["ItemSlotBG"], 0.5f));
-                    UIImage icon = UIImage.CreatePixel(new Vector2i(backPos.X + 2 + i * slotSize.X + iteminslotOffset.X, backPos.Y + 2 + iteminslotOffset.Y),
-                        iteminslotSize, Textures["Transparent"], 0.6f);
-                    icons[i] = icon;
-                    Scenes[0].Add(icon);
-                }*/
 
             UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) 
                 * BlockData.GUIScale), Textures["ToolbarHighlight"]);
             Scenes[0].Add(highlight);
 
             Toolbar.Init(highlight, slots);
+
+            CreativeInventory.Init(ref Scenes[3], backPos, slotSize, numbSlots);
+        }
+
+        public static List<IGUIElement> GetUnderPoint(Vector2i point)
+        {
+            List<IGUIElement> list = new List<IGUIElement>();
+            float x = ((float)point.X / Program.Window.Width * 2f) - 1f;
+            float y = (((float)point.Y / Program.Window.Height * 2f) - 1f) * -1f;
+            
+            for (int i = 0; i < elements.Count; i++) {
+                if (x >= elements[i].Position.X && y >= elements[i].Position.Y
+                    && x < elements[i].Position.X + elements[i].Width && y < elements[i].Position.Y + elements[i].Height)
+                    list.Add(elements[i]);
+            }
+
+            return list;
         }
 
         private static void LoadColorTextures()
@@ -152,6 +163,11 @@ namespace Minecraft.Graphics.UI
             db = new DirectBitmap(1, 1);
             db.Clear(Color.FromArgb(255, 0, 255, 0));
             Textures.Add("Green", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
+            db.Dispose();
+
+            db = new DirectBitmap(1, 1);
+            db.Clear(Color.FromArgb(255, 255, 255, 255));
+            Textures.Add("White", new Texture(db.Data, db.Width, db.Height, TextureWrapMode.Repeat).id);
             db.Dispose();
         }
 
@@ -180,6 +196,9 @@ namespace Minecraft.Graphics.UI
             for (int i = 0; i < elements.Count; i++) {
                 elements[i].Render(uiShader);
             }
+
+            if (Scene == 3)
+                DragAndDropHandler.cursorSlot.Render(uiShader);
         }
 
         public static void OnKeyDown(Key key, KeyModifiers modifiers)

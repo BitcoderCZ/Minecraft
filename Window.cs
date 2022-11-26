@@ -1,19 +1,16 @@
 ﻿using OpenTK;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK.Graphics.OpenGL4;
 using System.Drawing;
 using OpenTK.Input;
 using System.Runtime.InteropServices;
 
-using Minecraft.Math;
-using System.ComponentModel;
 using Minecraft.Graphics;
 using Minecraft.Graphics.UI;
 using System.Threading;
+
+using Font = Minecraft.Graphics.Font;
+using Minecraft.Math;
 
 namespace Minecraft
 {
@@ -28,6 +25,7 @@ namespace Minecraft
         Shader uiShader;
         public Font font;
         public KeyboardState keyboardState;
+        public Vector2 mousePos;
 
         // Mouse
         bool mouseLocked;
@@ -51,6 +49,7 @@ namespace Minecraft
             Running = true;
 
             GL.Enable(EnableCap.DebugOutput);
+            //GL.Enable(EnableCap.DebugOutputSynchronous);
             debMessageCallback = new DebugProc(MessageCallback); // Fixed error: A callback was made on a garbage collected delegate
             GL.DebugMessageCallback(debMessageCallback, IntPtr.Zero); 
 
@@ -91,14 +90,15 @@ namespace Minecraft
             LockMouse();
         }
 
-        private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
+        private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr _message, IntPtr userParam)
         {
             if (id == 131185)
                 return;
-            byte[] managedArray = new byte[length];
-            Marshal.Copy(message, managedArray, 0, length);
+            /*byte[] managedArray = new byte[length];
+            Marshal.Copy(message, managedArray, 0, length);*/
+            string message = Marshal.PtrToStringAnsi(_message, length);
             Console.WriteLine($"MessageCallback: Source:{source}, Type:{type}, id:{id}, " +
-                $"Severity:{severity}, Message: {Encoding.ASCII.GetString(managedArray)}");
+                $"Severity:{severity}, Message: {message}");
         }
 
         float halfSecondUpdate = 0f;
@@ -134,10 +134,12 @@ namespace Minecraft
 
             Player.Update(keyboardState, delta);
 
+            DragAndDropHandler.Update();
+
             World.Update();
 
             // Other keyboard
-            if (keyboardState.IsKeyDown(Key.Escape)) {
+            if (keyboardState.IsKeyDown(Key.Escape) && GUI.Scene != 3) {
                 UnlockMouse();
                 if (GUI.Scene == 0)
                     GUI.SetScene(1);
@@ -186,6 +188,7 @@ namespace Minecraft
             keyboardState = e.Keyboard;
             GUI.OnKeyDown(e.Key, e.Modifiers);
             Player.OnKeyDown(e.Key, e.Modifiers);
+            DragAndDropHandler.OnKeyDown(e.Key);
         }
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
@@ -195,7 +198,7 @@ namespace Minecraft
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
         {
-            if (!mouseLocked && GUI.Scene == 1 || GUI.Scene == 2) {
+            if (!mouseLocked && (GUI.Scene == 1 || GUI.Scene == 2)) {
                 LockMouse();
                 if (GUI.Scene == 1)
                     GUI.SetScene(0);
@@ -204,11 +207,17 @@ namespace Minecraft
                 Player.OnMouseDown(e.Button);
 
             GUI.OnMouseDown(e.Button, e.Position);
+            DragAndDropHandler.OnMouseDown(e.Button, (Vector2i)e.Position);
         }
 
         protected override void OnMouseUp(MouseButtonEventArgs e)
         {
             GUI.OnMouseUp(e.Button, e.Position);
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            mousePos = new Vector2(e.Position.X, e.Position.Y);
         }
 
         // Mouse

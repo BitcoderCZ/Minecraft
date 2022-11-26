@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using System;
 using System.Collections.Generic;
+using System.Deployment.Application;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,7 +15,10 @@ namespace Minecraft
         static void Main(string[] args)
         {
             Console.WriteLine("Minecraft CSharp Edition");
-            Console.WriteLine($"Version: {BlockData.Version}");
+            if (ApplicationDeployment.IsNetworkDeployed)
+                Console.WriteLine($"ClickOnce, Version: v{ApplicationDeployment.CurrentDeployment.CurrentVersion}");
+            else
+                Console.WriteLine($"Non ClickOnce, Version: {BlockData.Version}");
             Console.WriteLine($"Main directory: {Environment.CurrentDirectory}/");
             Window = new Window();
             string version;

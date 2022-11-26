@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SystemPlus.Utils;
 
-namespace Minecraft
+namespace Minecraft.Graphics
 {
     public class Font
     {

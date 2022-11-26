@@ -82,6 +82,8 @@ namespace Minecraft.Graphics.UI
             xOff += width;
         }
 
+        public void SetPos()
+            => SetPos(Position.X, Position.Y);
         public void SetPos(float x, float y)
         {
             Position = new Vector3(x, y, Position.Z);
