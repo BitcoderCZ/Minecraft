@@ -49,7 +49,6 @@ namespace Minecraft
             Running = true;
 
             GL.Enable(EnableCap.DebugOutput);
-            //GL.Enable(EnableCap.DebugOutputSynchronous);
             debMessageCallback = new DebugProc(MessageCallback); // Fixed error: A callback was made on a garbage collected delegate
             GL.DebugMessageCallback(debMessageCallback, IntPtr.Zero); 
 
@@ -58,11 +57,11 @@ namespace Minecraft
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
-            shader = new Shader();
+            shader = new Shader(); // Used by blocks
             shader.Compile("shader");
-            uiShader = new Shader();
+            uiShader = new Shader(); // Used by UI
             uiShader.Compile("ui");
-            texShader = new Shader();
+            texShader = new Shader(); // Used for non world 3d
             texShader.Compile("tex");
 
             Texture.CreateBlockTA();
@@ -71,13 +70,7 @@ namespace Minecraft
             font = new Font("Minecraft", 32);
             GUI.Init(font);
 
-            GUI.SetScene(2); // Loading
-
-            Thread worldGenThread = new Thread(new ThreadStart(() =>
-            {
-                World.Generate();
-            }));
-            worldGenThread.Start();
+            GUI.SetScene(4); // Loading
 
             base.WindowBorder = WindowBorder.Fixed;
             base.WindowState = WindowState.Normal;
@@ -89,6 +82,7 @@ namespace Minecraft
             shader.UploadMat4("uView", ref Camera.viewMatrix);
 
             LockMouse();
+            UnlockMouse();
         }
 
         private void MessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr _message, IntPtr userParam)
@@ -175,6 +169,15 @@ namespace Minecraft
             GUI.Render(uiShader);
             
             SwapBuffers();
+        }
+
+        public void JoinWorld()
+        {
+            Thread worldGenThread = new Thread(new ThreadStart(() =>
+            {
+                World.Generate();
+            }));
+            worldGenThread.Start();
         }
 
         protected override void OnKeyDown(KeyboardKeyEventArgs e)

@@ -176,9 +176,74 @@ namespace Minecraft.Graphics
             Console.WriteLine($"TEXTURE:BLOCKARRAY:GENERATE:BLOCK:DONE count: {blockTextures.Length}");
         }
 
+        public DirectBitmap GetDB()
+        {
+            DirectBitmap db = new DirectBitmap(Width, Height);
+            BitmapData data = db.Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly,
+               System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            GL.GetTexImage(TextureTarget.Texture2D, 0, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            db.Bitmap.UnlockBits(data);
+            return db;
+        }
+
+        public static DirectBitmap GetDB(int id)
+        {
+            int Width, Height;
+            GL.BindTexture(TextureTarget.Texture2D, id);
+            GL.GetTexLevelParameter(TextureTarget.Texture2D, 0, GetTextureParameter.TextureWidth, out Width);
+            GL.GetTexLevelParameter(TextureTarget.Texture2D, 0, GetTextureParameter.TextureHeight, out Height);
+            DirectBitmap db = new DirectBitmap(Width, Height);
+            BitmapData data = db.Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly,
+               System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.GetTexImage(TextureTarget.Texture2D, 0, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            db.Bitmap.UnlockBits(data);
+            return db;
+        }
+
         public Texture(string path)
         {
             DirectBitmap db = DirectBitmap.Load(path, false);
+
+            Width = db.Width;
+            Height = db.Height;
+
+            int slot = 0;
+            GL.ActiveTexture(TextureUnit.Texture0 + slot);
+            GL.GenTextures(1, out id);
+            GL.BindTexture(TextureTarget.Texture2D, id);
+
+            BitmapData data = db.Bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, Width, Height, 0,
+                PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            db.Bitmap.UnlockBits(data);
+
+            db.Dispose();
+        }
+
+        public Texture(string path, TexFlip flip)
+        {
+            DirectBitmap db = DirectBitmap.Load(path, false);
+
+            if (flip != TexFlip.None) {
+                if ((flip & TexFlip.Vertical) == TexFlip.Vertical)
+                    db.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                if ((flip & TexFlip.Horizontal) == TexFlip.Horizontal)
+                    db.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            }
 
             Width = db.Width;
             Height = db.Height;

@@ -46,13 +46,13 @@ namespace Minecraft
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("Tree Patches", 14, 60, 0.2f, 2, 3, 0, 5, 9, 0.4f, 0.35f, 18f, 0.65f, 
+            new BiomeAttribs("Forest", 8752, 0.17f, 45, 0.3f, 2, 3, 0, 5, 9, 0.4f, 0.2f, 18f, 0.65f, 
                 new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
                 new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
-            new BiomeAttribs("Grass Lands", 8, 54, 0.16f, 2, 3, -1, 0, 0, 0f, 0f, 0f, 0f, 
+            new BiomeAttribs("Grass Lands", 1451, 0.042f, 30, 0.15f, 2, 3, -1, 0, 0, 0f, 0f, 0f, 0f, 
                 new Lode("cave", 0, true, 5, 64, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 56, 0.12f, 0.45f, 600f),
                 new Lode("granite", 9, false, 16, 56, 0.11f, 0.46f, 200f)),
-            new BiomeAttribs("Desert", 6, 50, 0.18f, 8, 8, 1, 3, 6, 0.4f, 0.1f, 18f, 0.75f,
+            new BiomeAttribs("Desert", 6524, 0.058f, 16, 0.05f, 8, 8, 1, 3, 6, 0.4f, 0.1f, 18f, 0.75f,
                 new Lode("cave", 0, false, 5, 54, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 54, 0.08f, 0.45f, 200f),
                 new Lode("granite", 9, false, 16, 54, 0.13f, 0.46f, -720f)),
         };
@@ -376,20 +376,47 @@ namespace Minecraft
 
         private static int TerrainHeightAt (Vector2 vec2)
         {
-            int biomeIndex = 0;
+            int solidGroundHeight = 42;
+            float sumOfHeights = 0f;
+            int count = 0;
+            float strongestWeight = 0f;
 
-            float noise = Noise.Get2DPerlinNoise(vec2, 1351f, 0.15f);
-            float step = 1f / biomes.Length;
-            float j = step;
             for (int i = 0; i < biomes.Length; i++) {
-                if (noise < j) {
-                    biomeIndex = i;
-                    break;
+                float weight = Noise.Get2DPerlinNoise(vec2, biomes[i].offset, biomes[i].scale);
+
+                if (weight > strongestWeight) {
+                    strongestWeight = weight;
                 }
-                j += step;
+
+                float height = Noise.Get2DPerlinNoise(vec2, 0f, biomes[i].terrainScale) * biomes[i].terrainHeight * weight;
+
+                if (height > 0) {
+                    sumOfHeights += height;
+                    count++;
+                }
             }
 
-            return (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[biomeIndex].terrainScale) * biomes[biomeIndex].terrainHeight + biomes[biomeIndex].minTerrainHeight); ;
+            if (count > 0)
+                sumOfHeights /= (float)count;
+
+            return (int)(sumOfHeights + solidGroundHeight);
+        }
+
+        public static int BiomeAt(Vector2 vec2)
+        {
+            float strongestWeight = 0f;
+            int strongestBiomeIndex = 0;
+
+            for (int i = 0; i < biomes.Length; i++) {
+                float weight = Noise.Get2DPerlinNoise(vec2, biomes[i].offset, biomes[i].scale);
+
+                if (weight > strongestWeight) {
+                    strongestWeight = weight;
+                    strongestBiomeIndex = i;
+                }
+            }
+
+            return strongestBiomeIndex;
         }
 
         public static uint GetGenBlock(int x, int y, int z)
@@ -405,21 +432,34 @@ namespace Minecraft
             Vector2 vec2 = new Vector2(x, z);
 
             // Biome Selection Pass
-            int biomeIndex = 0;
+            int solidGroundHeight = 42;
+            float sumOfHeights = 0f;
+            int count = 0;
+            float strongestWeight = 0f;
+            int strongestBiomeIndex = 0;
 
-            float noise = Noise.Get2DPerlinNoise(vec2, 1351f, 0.15f);
-            float step = 1f / biomes.Length;
-            float j = step;
             for (int i = 0; i < biomes.Length; i++) {
-                if (noise < j) {
-                    biomeIndex = i;
-                    break;
+                float weight = Noise.Get2DPerlinNoise(vec2, biomes[i].offset, biomes[i].scale);
+
+                if (weight > strongestWeight) {
+                    strongestWeight = weight;
+                    strongestBiomeIndex = i;
                 }
-                j += step;
+
+                float height = Noise.Get2DPerlinNoise(vec2, 0f, biomes[i].terrainScale) * biomes[i].terrainHeight * weight;
+
+                if (height > 0) {
+                    sumOfHeights += height;
+                    count++;
+                }
             }
 
+            int biomeIndex = strongestBiomeIndex;
+            if (count > 0)
+                sumOfHeights /= (float)count;
+
             // Basic terrain pass
-            int terrainHeight = (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[biomeIndex].terrainScale) * biomes[biomeIndex].terrainHeight + biomes[biomeIndex].minTerrainHeight);
+            int terrainHeight = (int)(sumOfHeights + solidGroundHeight);
             uint blockId;
 
             if (y == terrainHeight)

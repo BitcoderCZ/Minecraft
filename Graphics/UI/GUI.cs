@@ -34,8 +34,8 @@ namespace Minecraft.Graphics.UI
             new TextureInfo("ItemSlotBG"),
             new TextureInfo("ToolbarHighlight"),
             new TextureInfo("options_background"),
-            new TextureInfo("Button"),
-            new TextureInfo("Button_Selected"),
+            new TextureInfo("Button", TexFlip.Horizontal),
+            new TextureInfo("Button_Selected", TexFlip.Horizontal),
         };
         public static readonly Dictionary<string, int> Textures = new Dictionary<string, int>();
 
@@ -45,20 +45,20 @@ namespace Minecraft.Graphics.UI
         {
             elements = new List<IGUIElement>();
 
-            DirectBitmap bm;
+            Bitmap bm;
             for (int i = 0; i < texturesToLoad.Length; i++) {
                 if (!File.Exists(texPath + texturesToLoad[i].name + ".png")) {
                     Console.WriteLine($"Block texture {texturesToLoad[i].name}, wasn't found. skipped.");
                     continue;
                 }
 
-                bm = DirectBitmap.Load(texPath + texturesToLoad[i].name + ".png", false);
+                bm = (Bitmap)Image.FromFile(texPath + texturesToLoad[i].name + ".png");//DirectBitmap.Load(texPath + texturesToLoad[i].name + ".png", false);
 
                 if (texturesToLoad[i].flip != TexFlip.None) {
                     if ((texturesToLoad[i].flip & TexFlip.Vertical) == TexFlip.Vertical)
-                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        bm.RotateFlip(RotateFlipType.RotateNoneFlipX);
                     if ((texturesToLoad[i].flip & TexFlip.Horizontal) == TexFlip.Horizontal)
-                        bm.Bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                        bm.RotateFlip(RotateFlipType.RotateNoneFlipY);
                 }
 
                 if (texturesToLoad[i].colorFilter != Vector3.One) {
@@ -73,8 +73,12 @@ namespace Minecraft.Graphics.UI
                         }
                 }
 
-                Textures.Add(texturesToLoad[i].name, new Texture(bm.Data, bm.Width, bm.Height, TextureWrapMode.Repeat).id);
+                BitmapData data = bm.LockBits(new Rectangle(0, 0, bm.Width, bm.Height), ImageLockMode.ReadOnly, 
+                    System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
+                Textures.Add(texturesToLoad[i].name, new Texture(data, TextureWrapMode.Repeat).id);
+
+                bm.UnlockBits(data);
                 bm.Dispose();
             }
 
@@ -88,9 +92,9 @@ namespace Minecraft.Graphics.UI
                 new List<IGUIElement> {
                     new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false),
                     UItext.CreateCenter("Game Menu", 0, 350, 3f, font),
-                    new UIButton("Give Feedback", 0f, 0f, 1.8f, font, Textures["Button"]),
+                    new UISliceButton("Give Feedback", 0f, 0f, 1.8f, font, Textures["Button"], 2),
                 }, // Pause menu 1
-                new List<IGUIElement> { 
+                new List<IGUIElement> {
                     UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
                     UIImage.CreatePixel(new Vector2i(230, 250), new Vector2i(820, 60), Textures["Black"]), // loading bar
                     UIImage.CreatePixel(new Vector2i(240, 260), new Vector2i(0, 40), Textures["Green"]), // loading bar
@@ -103,6 +107,10 @@ namespace Minecraft.Graphics.UI
                     new UIImage(-1f, -1f, 2f, 2f, Textures["BlackTransparent"], false),
 
                 }, // Inventory 3
+                new List<IGUIElement>
+                {
+                    UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
+                }, // Main Menu 4
             };
 
             int numbSlots = 9;
@@ -126,6 +134,21 @@ namespace Minecraft.Graphics.UI
             Toolbar.Init(highlight, slots);
 
             CreativeInventory.Init(ref Scenes[3], backPos, slotSize, numbSlots);
+
+            UISliceButton playBtn = new UISliceButton("Play", 0f, 0f, 3f, font, Textures["Button"], 2, padB: 0.075f, padT: 0.075f);
+            bool clickedPlay = false;
+            playBtn.OnClick = (MouseButton btn) =>
+            {
+                if (btn == MouseButton.Left) {
+                    if (!clickedPlay) {
+                        Program.Window.LockMouse();
+                        SetScene(2);
+                        Program.Window.JoinWorld();
+                        clickedPlay = true;
+                    }
+                }
+            };
+            Scenes[4].Add(playBtn);
         }
 
         public static List<IGUIElement> GetUnderPoint(Vector2i point)
@@ -215,8 +238,8 @@ namespace Minecraft.Graphics.UI
         }
         public static void OnMouseDown(MouseButton button, Point pos)
         {
-            float x = (float)pos.X / Program.Window.Width;
-            float y = (float)pos.Y / Program.Window.Height;
+            float x = (float)pos.X / Program.Window.Width * 2f - 1f;
+            float y = ((float)pos.Y / Program.Window.Height * 2f - 1) * -1f;
             for (int i = 0; i < elements.Count; i++) {
                 elements[i].OnMouseDown(button,
                     x >= elements[i].Position.X && x < elements[i].Width + elements[i].Position.X &&

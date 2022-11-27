@@ -111,7 +111,7 @@ namespace Minecraft
                     }
                 }
 
-                Console.Title = $"Player pos: {Position}, Player Velocity: {velocity}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}, scene: {GUI.Scene}";
+                Console.Title = $"Player pos: {Position}, Player Velocity: {velocity}, Player chunk: {World.prevPlayerChunk}, high: {highlightblock.Position}, Biome: {World.biomes[World.BiomeAt(new Vector2(Position.X, Position.Z))].name}, scene: {GUI.Scene}";
                 /*if (keyboardState.IsKeyDown(Key.W)) // flying
                     Move(0f, delta * mult);
                 else if (keyboardState.IsKeyDown(Key.S))

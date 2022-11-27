@@ -155,6 +155,8 @@
     <Compile Include="Graphics\IRenderObject.cs" />
     <Compile Include="Graphics\UI\GUIElement.cs" />
     <Compile Include="Graphics\UI\IGUIElement.cs" />
+    <Compile Include="Graphics\UI\UISliceButton.cs" />
+    <Compile Include="Graphics\UI\UISliceImage.cs" />
     <Compile Include="ItemSlot.cs" />
     <Compile Include="Graphics\UI\UIButton.cs" />
     <Compile Include="Graphics\UI\UIImage.cs" />

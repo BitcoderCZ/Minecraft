@@ -39,11 +39,6 @@ namespace Minecraft.Graphics.UI
             return img;
         }
 
-        public UIImage()
-        {
-
-        }
-
         public UIImage(float x, float y, float width, float height, int _textureID, bool mentainAspectRatio, float _z = 1f)
         {
             Position = new Vector3((mentainAspectRatio ? x / Program.Window.AspectRatio : x), y, 0f);
@@ -82,12 +77,29 @@ namespace Minecraft.Graphics.UI
 
             UploadMesh();
         }
+        public void SetMeshData(Vertex2D[] v, uint[] t)
+        {
+            vertices[0] = v[0];
+            vertices[1] = v[1];
+            vertices[2] = v[2];
+            vertices[3] = v[3];
+
+            triangles[0] = t[0];
+            triangles[1] = t[1];
+            triangles[2] = t[2];
+            triangles[3] = t[3];
+            triangles[4] = t[4];
+            triangles[5] = t[5];
+
+            UploadMesh();
+        }
 
         public override void Render(Shader s)
         {
             if (!Active)
                 return;
 
+            s.Bind();
             Matrix4 mat = Matrix4.CreateTranslation(Position);
             s.UploadMat4("uTransform", ref mat);
 

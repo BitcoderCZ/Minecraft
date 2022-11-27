@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Minecraft.Graphics.UI
 {
-    public class UIButton : GUIElement
+    public class UISliceButton : GUIElement
     {
         public UItext uiText;
 
@@ -18,7 +18,7 @@ namespace Minecraft.Graphics.UI
             set { uiText.Text = value; uiText.UpdateMesh(); }
         }
 
-        public UIImage uiImage;
+        public UISliceImage uiImage;
 
         public float PadTop;
         public float PadBottom;
@@ -27,17 +27,23 @@ namespace Minecraft.Graphics.UI
 
         public Action<MouseButton> OnClick;
 
-        public UIButton(string text, float x, float y, float textScale, Font font, int texID, bool mantainAspect = false, float padT = 0.05f, float padB = 0.05f, float padL = 0.05f, float padR = 0.05f)
+        public UISliceButton(string text, float x, float y, float textScale, Font font, int texID, int border, bool mantainAspect = false, float padT = 0.05f, float padB = 0.05f, float padL = 0.05f, float padR = 0.05f)
         {
+            Position = new Vector3(x, y, -1f);
             uiText = new UItext(text, x, y, textScale, font);
             Text = text;
-
-            uiImage = new UIImage(x, y, uiText.Width, uiText.Height, texID, mantainAspect, 1f);
 
             PadTop = padT;
             PadBottom = padB;
             PadLeft = padL;
             PadRight = padR;
+
+            Width = uiText.Width + PadLeft + PadRight;
+            Height = uiText.Height + PadBottom + PadTop;
+
+            uiImage = new UISliceImage(x, y, uiText.Width + PadLeft + PadRight, uiText.Height + PadBottom + PadTop, border,
+                texID, mantainAspect);
+
 
             UpdateApparence();
         }
@@ -46,10 +52,6 @@ namespace Minecraft.Graphics.UI
         {
             uiText.SetPos(Position.X + PadLeft, Position.Y + PadBottom);
             uiImage.Position = new Vector3(Position.X, Position.Y, uiImage.Position.Z);
-
-            uiImage.Width = uiText.Width + PadLeft + PadRight;
-            uiImage.Height = uiText.Height + PadBottom + PadTop;
-            uiImage.UpdateVerts();
         }
 
         public override void Render(Shader s)

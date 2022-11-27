@@ -8,9 +8,11 @@ namespace Minecraft
 {
     public struct BiomeAttribs
     {
+        //
         public string name;
+        public int offset;
+        public float scale;
 
-        public int minTerrainHeight;
         public int terrainHeight;
         public float terrainScale;
 
@@ -29,14 +31,16 @@ namespace Minecraft
 
         public Lode[] lodes;
 
-        public BiomeAttribs(string _name, int _terrainHeight, int _minTerrainHeight, float _terrainScale, uint _surfaceBlock,
+        public BiomeAttribs(string _name, int _offset, float _scale, int _terrainHeight, float _terrainScale, uint _surfaceBlock,
             uint _subSurfaceBlock, int _majorFloarIndex, int _minH, int _maxH, float _majorFloraZoneScale,
             float _majorFloraZoneThreashold, float _majorFloraPlacementScale, float _majorFloraPlacementThreashold, 
             params Lode[] _lodes)
         {
             name = _name;
+            offset = _offset;
+            scale = _scale;
+
             terrainHeight = _terrainHeight;
-            minTerrainHeight = _minTerrainHeight;
             terrainScale = _terrainScale;
 
             surfaceBlock = _surfaceBlock;
