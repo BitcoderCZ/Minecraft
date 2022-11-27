@@ -41,12 +41,20 @@ namespace Minecraft
             new BlockType("oak_log", true, false, 0f, 16, 16, 17, 17, 16, 16, 14), // 15
             new BlockType("oak_leaves", true, true, 0.8f, 18, 15), // 16
             new BlockType("glass_block", true, true, 1f, 19, 16), // 17
+            new BlockType("cactus", true, false, 0f, 21, 21, 20, 20, 21, 21, 17), // 18
+            new BlockType("cactus_top", true, false, 0f, 21, 21, 22, 20, 21, 21, 17), // 19
         };
         public static readonly BiomeAttribs[] biomes = new BiomeAttribs[]
         {
-            new BiomeAttribs("plains", 60, 14, 0.2f, 0.4f, 0.35f, 18f, 0.65f, new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), 
-                new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
-                                new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
+            new BiomeAttribs("Tree Patches", 14, 60, 0.2f, 2, 3, 0, 5, 9, 0.4f, 0.35f, 18f, 0.65f, 
+                new Lode("cave", 0, false, 5, 90, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 65, 0.1f, 0.45f, 0f),
+                new Lode("granite", 9, false, 16, 55, 0.12f, 0.46f, 100f)),
+            new BiomeAttribs("Grass Lands", 8, 54, 0.16f, 2, 3, -1, 0, 0, 0f, 0f, 0f, 0f, 
+                new Lode("cave", 0, true, 5, 64, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 56, 0.12f, 0.45f, 600f),
+                new Lode("granite", 9, false, 16, 56, 0.11f, 0.46f, 200f)),
+            new BiomeAttribs("Desert", 6, 50, 0.18f, 8, 8, 1, 3, 6, 0.4f, 0.1f, 18f, 0.75f,
+                new Lode("cave", 0, false, 5, 54, 0.08f, 0.42f, -100f), new Lode("dirt", 3, false, 35, 54, 0.08f, 0.45f, 200f),
+                new Lode("granite", 9, false, 16, 54, 0.13f, 0.46f, -720f)),
         };
         public static uint seed;
 
@@ -262,8 +270,7 @@ namespace Minecraft
             }
 
             Player.Position = spawnPos + new Vector3(0.5f, 0.5f, 0.5f);
-            Player.Position.Y = (int)(Noise.Get2DPerlinNoise(new Vector2(Player.Position.X, Player.Position.Z), 0f, biomes[0].terrainScale)
-                * biomes[0].terrainHeight + biomes[0].minHeight) + 2.5f;
+            Player.Position.Y = TerrainHeightAt(new Vector2(Player.Position.X, Player.Position.Z)) + 2.5f;
             prevPlayerChunk = BlockToChunk(Player.Position);
 
             Console.WriteLine("WORLD:GENERATE:DONE");
@@ -367,6 +374,24 @@ namespace Minecraft
         public static BlockState? GetBlockState(float x, float y, float z)
             => GetBlockState(new Vector3(x, y, z));
 
+        private static int TerrainHeightAt (Vector2 vec2)
+        {
+            int biomeIndex = 0;
+
+            float noise = Noise.Get2DPerlinNoise(vec2, 1351f, 0.15f);
+            float step = 1f / biomes.Length;
+            float j = step;
+            for (int i = 0; i < biomes.Length; i++) {
+                if (noise < j) {
+                    biomeIndex = i;
+                    break;
+                }
+                j += step;
+            }
+
+            return (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[biomeIndex].terrainScale) * biomes[biomeIndex].terrainHeight + biomes[biomeIndex].minTerrainHeight); ;
+        }
+
         public static uint GetGenBlock(int x, int y, int z)
         {
             // Immutable pass
@@ -379,22 +404,36 @@ namespace Minecraft
 
             Vector2 vec2 = new Vector2(x, z);
 
+            // Biome Selection Pass
+            int biomeIndex = 0;
+
+            float noise = Noise.Get2DPerlinNoise(vec2, 1351f, 0.15f);
+            float step = 1f / biomes.Length;
+            float j = step;
+            for (int i = 0; i < biomes.Length; i++) {
+                if (noise < j) {
+                    biomeIndex = i;
+                    break;
+                }
+                j += step;
+            }
+
             // Basic terrain pass
-            int terrainHeight = (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[0].terrainScale) * biomes[0].terrainHeight + biomes[0].minHeight);
+            int terrainHeight = (int)(Noise.Get2DPerlinNoise(vec2, 0f, biomes[biomeIndex].terrainScale) * biomes[biomeIndex].terrainHeight + biomes[biomeIndex].minTerrainHeight);
             uint blockId;
 
             if (y == terrainHeight)
-                blockId = 2;
+                blockId = biomes[biomeIndex].surfaceBlock;
             else if (y < terrainHeight && y >= terrainHeight - 3)
-                blockId = 3;
+                blockId = biomes[biomeIndex].subSurfaceBlock;
             else if (y < terrainHeight)
                 blockId = 1;
             else
                 return 0;
 
             // Second pass
-            for (int i = 0; i < biomes[0].lodes.Length; i++) {
-                Lode lode = biomes[0].lodes[i];
+            for (int i = 0; i < biomes[biomeIndex].lodes.Length; i++) {
+                Lode lode = biomes[biomeIndex].lodes[i];
                 if (!lode.reachTerrain && y >= terrainHeight - 3)
                     continue;
                 if (y >= lode.minHeight && y <= lode.maxHeight) {
@@ -404,10 +443,11 @@ namespace Minecraft
             }
 
             // Tree pass
-            if (y == terrainHeight) {
-                if (Noise.Get2DPerlinNoise(vec2, -700f, biomes[0].treeZoneScale) > biomes[0].treeZoneThreashold) {
-                    if (Noise.Get2DPerlinNoise(vec2, 1200f, biomes[0].treePlacementScale) > biomes[0].treePlacementThreashold) {
-                        Structure.MakeTree(new Vector3i(x, y, z), modifications, 5, 9);
+            if (y == terrainHeight && biomes[biomeIndex].majorFloarIndex != -1) {
+                if (Noise.Get2DPerlinNoise(vec2, -700f, biomes[biomeIndex].majorFloraZoneScale) > biomes[biomeIndex].majorFloraZoneThreashold) {
+                    if (Noise.Get2DPerlinNoise(vec2, 1200f, biomes[biomeIndex].majorFloraPlacementScale) > biomes[biomeIndex].majorFloraPlacementThreashold) {
+                        Structure.GenerateMajorFlora(biomes[biomeIndex].majorFloarIndex, modifications, new Vector3i(x, y, z),
+                            biomes[biomeIndex].minHeight, biomes[biomeIndex].maxHeight);
                     }
                 }
             }

@@ -13,7 +13,37 @@ namespace Minecraft
     {
         private static readonly object addToQueueLock = new object();
 
-        public static void MakeTree(Vector3i position, ConcurrentQueue<BlockMod> queue, int minHeight, int maxHeight)
+        public static void GenerateMajorFlora(int index, ConcurrentQueue<BlockMod> queue, Vector3i position,
+            int minHeight, int maxHeight)
+        {
+            switch (index) {
+                case 0:
+                    MakeTree(queue, position, minHeight, maxHeight);
+                    return;
+                case 1:
+                    MakeCactus(queue, position, minHeight, maxHeight);
+                    return;
+                default:
+                    return;
+            }
+        }
+
+        public static void MakeCactus(ConcurrentQueue<BlockMod> queue, Vector3i position, int minHeight, int maxHeight)
+        {
+            int height = (int)((maxHeight - minHeight) * Noise.Get2DPerlinNoise(new Vector2(position.X, position.Z), -120f, 1f)) + minHeight;
+
+            if (height < minHeight)
+                height = minHeight;
+
+            lock (addToQueueLock) {
+                for (int i = 1; i < height; i++)
+                    queue.Enqueue(new BlockMod(new Vector3i(position.X, position.Y + i, position.Z), 18));
+
+                queue.Enqueue(new BlockMod(new Vector3i(position.X, position.Y + height, position.Z), 19));
+            }
+        }
+
+        public static void MakeTree(ConcurrentQueue<BlockMod> queue, Vector3i position, int minHeight, int maxHeight)
         {
             int height = (int)((maxHeight - minHeight) * Noise.Get2DPerlinNoise(new Vector2(position.X, position.Z), 120f, 1f)) + minHeight;
 

@@ -50,26 +50,30 @@ namespace Minecraft.Graphics
             new TextureInfo("oak_log_top"), // 17
             new TextureInfo("oak_leaves", new Vector3(0.65f, 1f, 0.2f)), // 18
             new TextureInfo("glass"), // 19
+            new TextureInfo("cactus_bottom"), // 20
+            new TextureInfo("cactus_side"), // 21
+            new TextureInfo("cactus_top"), // 22
         };
         private static readonly ItemTextureInfo[] itemTextures = new ItemTextureInfo[]
         {
-            new ItemTextureInfo("stone", LF.Items), // 1
+            new ItemTextureInfo("stone", LF.Items), // 0
             new ItemTextureInfo("grass_block", LF.Items),
-            new ItemTextureInfo("dirt", LF.Items), // 3
+            new ItemTextureInfo("dirt", LF.Items), // 2
             new ItemTextureInfo("cobblestone", LF.Items),
             new ItemTextureInfo("oak_planks", LF.Items),
             new ItemTextureInfo("oak_sapling", LF.Blocks),
             new ItemTextureInfo("bedrock", LF.Items),
             new ItemTextureInfo("sand", LF.Items),
             new ItemTextureInfo("granite", LF.Items),
-            new ItemTextureInfo("polished_granite", LF.Items), // 10
+            new ItemTextureInfo("polished_granite", LF.Items), // 9
             new ItemTextureInfo("diorite", LF.Items),
             new ItemTextureInfo("polished_diorite", LF.Items),
             new ItemTextureInfo("andesite", LF.Items),
-            new ItemTextureInfo("polished_andesite", LF.Items), // 14
+            new ItemTextureInfo("polished_andesite", LF.Items), // 13
             new ItemTextureInfo("oak_log", LF.Items),
             new ItemTextureInfo("oak_leaves", LF.Items),
-            new ItemTextureInfo("glass_block", LF.Items), // 17
+            new ItemTextureInfo("glass_block", LF.Items), // 16
+            new ItemTextureInfo("cactus", LF.Items), // 17
         };
 
         public static void LoadItems()

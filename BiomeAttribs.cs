@@ -10,30 +10,45 @@ namespace Minecraft
     {
         public string name;
 
-        public int minHeight;
+        public int minTerrainHeight;
         public int terrainHeight;
         public float terrainScale;
 
-        // Trees
-        public float treeZoneScale;
-        public float treeZoneThreashold;
-        public float treePlacementScale;
-        public float treePlacementThreashold;
+        public uint surfaceBlock;
+        public uint subSurfaceBlock;
+
+        // Major Flora
+        public int majorFloarIndex;
+        public float majorFloraZoneScale;
+        public float majorFloraZoneThreashold;
+        public float majorFloraPlacementScale;
+        public float majorFloraPlacementThreashold;
+
+        public int maxHeight;
+        public int minHeight;
 
         public Lode[] lodes;
 
-        public BiomeAttribs(string _name, int _minH, int _terrainHeight, float _terrainScale, float _treeZoneScale, 
-            float _treeZoneThreashold, float _treePlacementScale, float _treePlacementThreashold, params Lode[] _lodes)
+        public BiomeAttribs(string _name, int _terrainHeight, int _minTerrainHeight, float _terrainScale, uint _surfaceBlock,
+            uint _subSurfaceBlock, int _majorFloarIndex, int _minH, int _maxH, float _majorFloraZoneScale,
+            float _majorFloraZoneThreashold, float _majorFloraPlacementScale, float _majorFloraPlacementThreashold, 
+            params Lode[] _lodes)
         {
             name = _name;
-            minHeight = _minH;
             terrainHeight = _terrainHeight;
+            minTerrainHeight = _minTerrainHeight;
             terrainScale = _terrainScale;
 
-            treeZoneScale = _treeZoneScale;
-            treeZoneThreashold = _treeZoneThreashold;
-            treePlacementScale = _treePlacementScale;
-            treePlacementThreashold = _treePlacementThreashold;
+            surfaceBlock = _surfaceBlock;
+            subSurfaceBlock = _subSurfaceBlock;
+
+            majorFloarIndex = _majorFloarIndex;
+            minHeight = _minH;
+            maxHeight = _maxH;
+            majorFloraZoneScale = _majorFloraZoneScale;
+            majorFloraZoneThreashold = _majorFloraZoneThreashold;
+            majorFloraPlacementScale = _majorFloraPlacementScale;
+            majorFloraPlacementThreashold = _majorFloraPlacementThreashold;
 
             if (_lodes == null)
                 lodes = new Lode[0];
