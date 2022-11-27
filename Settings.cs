@@ -28,7 +28,7 @@ namespace Minecraft
             MouseSensitivity = 1f;
             Seed = -1;
             AnimatedChunks = true;
-            AnimatedChunksSpeed = 2f;
+            AnimatedChunksSpeed = 3f;
         }
     }
 }

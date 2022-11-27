@@ -26,6 +26,7 @@ namespace Minecraft
 
         // Rise Anim
         private float yOffset;
+        private float velocity;
 
         public Flat2i chunkPos;
         public Flat2i pos;
@@ -75,10 +76,16 @@ namespace Minecraft
 
         public void Update(float delta)
         {
-            if (CreatedMesh != 0 && yOffset < -0.05f) {
-                yOffset = Vector3.Lerp(new Vector3(0f, yOffset, 0f), Vector3.Zero, delta * World.Settings.AnimatedChunksSpeed).Y;
+            if (CreatedMesh != 0 && yOffset < -0.25f) {
+                float newY = (delta * World.Settings.AnimatedChunksSpeed) * -yOffset + yOffset;
+                velocity = (float)System.Math.Abs(newY - yOffset);
+                yOffset = newY;
             }
-            else if (CreatedMesh != 0 && yOffset >= -0.05f)
+            else if (CreatedMesh != 0 && yOffset < -0.001f) {
+                yOffset += /*0.737844044071f*/0.24594801469f * World.Settings.AnimatedChunksSpeed * delta;
+                // Average velocity, fixed sometimes velocity to slow
+            }
+            else if (CreatedMesh != 0 && yOffset >= -0.001f)
                 yOffset = 0f;
         }
 

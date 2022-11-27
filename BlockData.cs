@@ -21,7 +21,7 @@ namespace Minecraft
 		public const float maxLightLevel = 0.9f;
 		public const float lightFalloff = 0.08f;
 
-		public const string Version = "v1.0.1.7";
+		public const string Version = "v1.0.1.8";
 
 		public static readonly Vector3[] blockVerts = new Vector3[8] {
 			new Vector3(0.0f, 0.0f, 0.0f),
