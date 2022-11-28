@@ -32,8 +32,8 @@
     <CreateWebPageOnPublish>true</CreateWebPageOnPublish>
     <WebPage>publish.html</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>9</ApplicationRevision>
-    <ApplicationVersion>1.0.1.9</ApplicationVersion>
+    <ApplicationRevision>3</ApplicationRevision>
+    <ApplicationVersion>1.0.2.3</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -155,8 +155,10 @@
     <Compile Include="Graphics\IRenderObject.cs" />
     <Compile Include="Graphics\UI\GUIElement.cs" />
     <Compile Include="Graphics\UI\IGUIElement.cs" />
+    <Compile Include="Graphics\UI\UICheckBox.cs" />
     <Compile Include="Graphics\UI\UISliceButton.cs" />
     <Compile Include="Graphics\UI\UISliceImage.cs" />
+    <Compile Include="Graphics\UI\UISlider.cs" />
     <Compile Include="ItemSlot.cs" />
     <Compile Include="Graphics\UI\UIButton.cs" />
     <Compile Include="Graphics\UI\UIImage.cs" />

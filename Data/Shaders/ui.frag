@@ -1,10 +1,10 @@
-#version 460 core
+#version 450 core
 
 out vec4 FragColor;
 
 layout (location = 0) in vec2 fUv;
 
-layout (location = 6, binding = 0) uniform sampler2D uTexture;
+layout (binding = 0) uniform sampler2D uTexture;
 
 void main()
 {

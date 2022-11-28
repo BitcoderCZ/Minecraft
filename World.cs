@@ -77,10 +77,29 @@ namespace Minecraft
 
         public static bool InUI { get => GUI.Scene != 0; }
 
+        private static int dispPlace = -1;
+
         public static float globalLight = 1.0f;
         private static Vector4 dayColor = new Vector4(0f, 1f, 0.98f, 1f);
         private static Vector4 nightColor = new Vector4(0f, 0f, 0.25f, 1f);
         public static Color4 SkyColor = Color.Cyan;
+
+        public static void LoadSettings()
+        {
+            string settingsPath = Environment.CurrentDirectory + "/Data/Settings.json";
+            if (!File.Exists(settingsPath))
+                Settings = new Settings();
+            else
+                Settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath));
+
+            SaveSettings();
+        }
+
+        public static void SaveSettings()
+        {
+            string settingsPath = Environment.CurrentDirectory + "/Data/Settings.json";
+            File.WriteAllBytes(settingsPath, JsonSerializer.SerializeToUtf8Bytes(Settings));
+        }
 
         public static void Init()
         {
@@ -88,15 +107,7 @@ namespace Minecraft
             Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
             spawnPos = new Vector3(BlockData.WorldSizeInBlocks / 2f, BlockData.ChunkHeight + 2f, BlockData.WorldSizeInBlocks / 2f);
 
-            string settingsPath = Environment.CurrentDirectory + "/Data/Settings.json";
-            if (!File.Exists(settingsPath)) {
-                Settings = new Settings();
-                File.WriteAllBytes(settingsPath, JsonSerializer.SerializeToUtf8Bytes(Settings));
-            }
-            else {
-                Settings = JsonSerializer.Deserialize<Settings>(File.ReadAllText(settingsPath));
-                File.WriteAllBytes(settingsPath, JsonSerializer.SerializeToUtf8Bytes(Settings));
-            }
+            LoadSettings();
 
             if (Settings.Seed == -1) {
                 seed = (uint)r.Next();
@@ -116,8 +127,13 @@ namespace Minecraft
 
         public static void Update(float delta)
         {
-            Console.SetCursorPosition(0, 6);
+            if (dispPlace == -1)
+                dispPlace = Console.CursorTop;
+            int before = Console.CursorTop;
+            Console.SetCursorPosition(0, dispPlace);
             Console.Write($"Create: {chunksToCreate.Count}, Update: {chunksToUpdate.Count}, Modify: {modifications.Count}, Scene: {GUI.Scene}        ");
+            Console.SetCursorPosition(0, before);
+
             Vector4 lerp =  Vector4.Lerp(dayColor, nightColor, 1f - globalLight);
             SkyColor = new Color4(lerp.X, lerp.Y, lerp.Z, lerp.W);
 
@@ -214,15 +230,15 @@ namespace Minecraft
 
             float max = 800f;
             float length = 0f;
-            float step = (1f / ((float)Settings.RenderDistance * (float)Settings.RenderDistance)) * max;
+            float step = (1f / (((float)Settings.RenderDistance + 1f) * ((float)Settings.RenderDistance) + 1f)) * max;
             step /= 4f;
 
             float smallMax = 600f;
             float smallStep = (1f / 2f) * smallMax;
             float smallLength = 0f;
 
-            for (int x = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; x < BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; x++)
-                for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z < BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
+            for (int x = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; x <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; x++)
+                for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
                     if (IsChunkInWorld(x, z)) {
                         Flat2i pos = new Flat2i(x, z);
                         chunks[x, z] = new Chunk(pos, true);
@@ -300,8 +316,8 @@ namespace Minecraft
 
             activeChunks.Clear();
 
-            for (int x = playerChunk.X - Settings.RenderDistance; x < playerChunk.X + Settings.RenderDistance; x++)
-                for (int z = playerChunk.Z - Settings.RenderDistance; z < playerChunk.Z + Settings.RenderDistance; z++) {
+            for (int x = playerChunk.X - Settings.RenderDistance; x <= playerChunk.X + Settings.RenderDistance; x++)
+                for (int z = playerChunk.Z - Settings.RenderDistance; z <= playerChunk.Z + Settings.RenderDistance; z++) {
                     if (!IsChunkInWorld(x, z))
                         continue;
 

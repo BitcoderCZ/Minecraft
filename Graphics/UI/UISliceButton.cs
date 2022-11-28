@@ -27,11 +27,14 @@ namespace Minecraft.Graphics.UI
 
         public Action<MouseButton> OnClick;
 
-        public UISliceButton(string text, float x, float y, float textScale, Font font, int texID, int border, bool mantainAspect = false, float padT = 0.05f, float padB = 0.05f, float padL = 0.05f, float padR = 0.05f)
+        public UISliceButton(string text, float x, float y, float textScale, Font font, int texID, int border, Action<MouseButton> _onClick = null,
+            bool mantainAspect = false, float padT = 0.05f, float padB = 0.05f, float padL = 0.05f, float padR = 0.05f)
         {
             Position = new Vector3(x, y, -1f);
             uiText = new UItext(text, x, y, textScale, font);
             Text = text;
+
+            OnClick = _onClick;
 
             PadTop = padT;
             PadBottom = padB;
@@ -52,6 +55,7 @@ namespace Minecraft.Graphics.UI
         {
             uiText.SetPos(Position.X + PadLeft, Position.Y + PadBottom);
             uiImage.Position = new Vector3(Position.X, Position.Y, uiImage.Position.Z);
+            uiImage.Move();
         }
 
         public override void Render(Shader s)

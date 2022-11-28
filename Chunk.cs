@@ -258,7 +258,7 @@ namespace Minecraft
             s.UploadMat4("uTransform", ref transform);
             GL.ActiveTexture(TextureUnit.Texture1);
             GL.BindTexture(TextureTarget.Texture2DArray, Texture.taid);
-            GL.Uniform1(5, Texture.taid);
+            s.UploadInt("textures", Texture.taid);//GL.Uniform1(5, Texture.taid);
 
             GL.BindVertexArray(vao);
             GL.DrawElements(BeginMode.Triangles, triangles.Count, DrawElementsType.UnsignedInt, 0);

@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SystemPlus;
 using SystemPlus.Utils;
 
 namespace Minecraft.Graphics.UI
@@ -36,6 +37,9 @@ namespace Minecraft.Graphics.UI
             new TextureInfo("options_background"),
             new TextureInfo("Button", TexFlip.Horizontal),
             new TextureInfo("Button_Selected", TexFlip.Horizontal),
+            new TextureInfo("InputField", TexFlip.Horizontal),
+            new TextureInfo("Logo"), // 271 x 44
+            new TextureInfo("TextBox"), // 271 x 44
         };
         public static readonly Dictionary<string, int> Textures = new Dictionary<string, int>();
 
@@ -110,9 +114,38 @@ namespace Minecraft.Graphics.UI
                 new List<IGUIElement>
                 {
                     UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
+                    UIImage.CreateCenter(1.8f * 1.5f, 0.29f * 1.5f, Textures["Logo"], true),
                 }, // Main Menu 4
+                new List<IGUIElement>
+                {
+                    UIImage.CreateRepeate(-1f, -1f, 2f, 2f, Textures["options_background"], 12, 12),
+                    UIImage.CreateCenter(1.2f, 1.8f, Textures["BlackTransparent"], false),
+                    UItext.CreateCenter("Settings", 0, 440, 6f, font),
+                    new UItext("Render Distance:", -0.45f, 0.3f, 2f, font),
+                    new UISlider(0.05f, 0.25f, 0.4f, 0.15f, 2f, font, 2f, 8f, 3f, 0), // 4
+                    new UItext("Mouse Sensitivity:", -0.5f, 0.1f, 2f, font),
+                    new UISlider(0.05f, 0.05f, 0.4f, 0.15f, 2f, font, 0.1f, 10f, 1f, 1), // 6
+                    new UItext("Animated Chunks:", -0.45f, -0.1f, 2f, font),
+                    new UICheckBox(0.05f, -0.15f, 0.15f, true), // 8
+                    new UISliceButton("Cancel", -0.45f, -0.8f, 3f, font, Textures["Button"], 2, (MouseButton btn) => {
+                        if (btn == MouseButton.Left)
+                            SetScene(4);
+                    }),
+                    new UISliceButton("OK", 0.25f, -0.8f, 3f, font, Textures["Button"], 2, (MouseButton btn) => {
+                        if (btn != MouseButton.Left)
+                            return;
+                        World.Settings.RenderDistance = MathPlus.RoundToInt((Scenes[5][4] as UISlider).Value);
+                        World.Settings.MouseSensitivity = MathPlus.Round((Scenes[5][6] as UISlider).Value, 1);
+                        World.Settings.AnimatedChunks = (Scenes[5][8] as UICheckBox).Checked;
+                        World.SaveSettings();
+                            SetScene(4);
+                    }),
+                }, // Settings 5
             };
-
+            AddToScenes(font);
+        }
+        private static void AddToScenes(Font font)
+        {
             int numbSlots = 9;
             slotSize = (Vector2i)(new Vector2(24, 24) * World.Settings.GUIScale);
             iteminslotSize = (Vector2i)(new Vector2(16, 16) * World.Settings.GUIScale);
@@ -127,7 +160,7 @@ namespace Minecraft.Graphics.UI
                 Scenes[3].Add(slots[i]);
             }
 
-            UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26) 
+            UIImage highlight = UIImage.CreatePixel(new Vector2i(backPos.X, backPos.Y), (Vector2i)(new Vector2(26, 26)
                 * World.Settings.GUIScale), Textures["ToolbarHighlight"]);
             Scenes[0].Add(highlight);
 
@@ -135,6 +168,8 @@ namespace Minecraft.Graphics.UI
 
             CreativeInventory.Init(ref Scenes[3], backPos, slotSize, numbSlots);
 
+            // Main Menu
+            (Scenes[4][1] as GUIElement).Position = new Vector3(-Scenes[4][1].Width / 2f, 0.35f, 1f);
             UISliceButton playBtn = new UISliceButton("Play", 0f, 0f, 3f, font, Textures["Button"], 2, padB: 0.075f, padT: 0.075f);
             bool clickedPlay = false;
             playBtn.OnClick = (MouseButton btn) =>
@@ -148,7 +183,43 @@ namespace Minecraft.Graphics.UI
                     }
                 }
             };
+            playBtn.PixX -= playBtn.PixWidth / 2;
+            playBtn.PixY -= playBtn.PixHeight / 2;
+            playBtn.UpdateApparence();
             Scenes[4].Add(playBtn);
+
+            UISliceButton settingsBtn = new UISliceButton("Settings", 0f, 0f, 3f, font, Textures["Button"], 2, padB: 0.075f, padT: 0.075f);
+            settingsBtn.OnClick = (MouseButton btn) =>
+            {
+                if (btn == MouseButton.Left) {
+                    World.LoadSettings();
+                    (Scenes[5][4] as UISlider).Value = World.Settings.RenderDistance;
+                    (Scenes[5][6] as UISlider).Value = World.Settings.MouseSensitivity;
+                    (Scenes[5][8] as UICheckBox).Checked = World.Settings.AnimatedChunks;
+                    SetScene(5); // Settings
+                }
+            };
+            settingsBtn.PixX -= settingsBtn.PixWidth / 2;
+            settingsBtn.PixY = 200;
+            settingsBtn.UpdateApparence();
+            Scenes[4].Add(settingsBtn);
+
+            UISliceButton exitBtn = new UISliceButton("Exit", 0f, 0f, 3f, font, Textures["Button"], 2, padB: 0.075f, padT: 0.075f);
+            bool clickedExit = false;
+            exitBtn.OnClick = (MouseButton btn) =>
+            {
+                if (btn == MouseButton.Left) {
+                    if (!clickedExit) {
+                        Program.Window.Running = false;
+                        Environment.Exit(0);
+                        clickedExit = true;
+                    }
+                }
+            };
+            exitBtn.PixX -= exitBtn.PixWidth / 2;
+            exitBtn.PixY = 80;
+            exitBtn.UpdateApparence();
+            Scenes[4].Add(exitBtn);
         }
 
         public static List<IGUIElement> GetUnderPoint(Vector2i point)
@@ -224,6 +295,12 @@ namespace Minecraft.Graphics.UI
                 DragAndDropHandler.cursorSlot.Render(uiShader);
         }
 
+        public static void OnKeyPress(char keyChar)
+        {
+            for (int i = 0; i < elements.Count; i++) {
+                elements[i].OnKeyPress(keyChar);
+            }
+        }
         public static void OnKeyDown(Key key, KeyModifiers modifiers)
         {
             for (int i = 0; i < elements.Count; i++) {

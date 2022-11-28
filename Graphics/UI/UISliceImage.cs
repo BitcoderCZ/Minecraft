@@ -27,8 +27,8 @@ namespace Minecraft.Graphics.UI
 
         public UISliceImage(float x, float y, float width, float height, int borderWidthInPixels, int texture, bool mentainAspectRatio = false)
         {
-            Position = new Vector3((mentainAspectRatio ? x / Program.Window.AspectRatio : x), y, 0f);
-            Width = mentainAspectRatio ? width / Program.Window.AspectRatio : width;
+            Position = new Vector3(/*(mentainAspectRatio ? x / Program.Window.AspectRatio : */x/*)*/, y, 0f);
+            Width = /*mentainAspectRatio ? width / Program.Window.AspectRatio : */width;
             Height = height;
 
             tex = texture;
@@ -99,15 +99,17 @@ namespace Minecraft.Graphics.UI
             for (int i = 0; i < center.Height; i++)
                 center.Write(i * center.Width, db.Data, (i + 2) * db.Width + 2, center.Width);
 
+            float aspect = Width / Height;
+
             texCenter = new Texture(center);
             imgCenter = new UIImage(x, y, Width, Height, texCenter.id, false);
             imgCenter.SetMeshData(new Vertex2D[]
             {
                 new Vertex2D(sliceW, sliceH, -z, zero, zero),
                 new Vertex2D(sliceW, Height - sliceH, -z, zero, one),
-                new Vertex2D(Width - sliceW, Height - sliceH, -z, one * /*(!mentainAspectRatio ? Program.Window.AspectRatio : 1f)*/1f
+                new Vertex2D(Width - sliceW, Height - sliceH, -z, one * (mentainAspectRatio ? aspect : 1f)
                 * 2, one),
-                new Vertex2D(Width - sliceW, sliceH, -z, one * /*(!mentainAspectRatio ? Program.Window.AspectRatio : 1f)*/1f * 2, zero),
+                new Vertex2D(Width - sliceW, sliceH, -z, one * (mentainAspectRatio ? aspect : 1f) * 2, zero),
             }, new uint[] 
             {
                 2, 1, 0,
@@ -135,6 +137,11 @@ namespace Minecraft.Graphics.UI
             UploadMesh();
         }
 
+        public void Move()
+        {
+            imgCenter.Position = Position;
+        }
+
         public override void Render(Shader s)
         {
             if (!Active)
@@ -147,7 +154,7 @@ namespace Minecraft.Graphics.UI
             int slot = 0;
             GL.ActiveTexture(TextureUnit.Texture0 + slot);
             GL.BindTexture(TextureTarget.Texture2D, tex);
-            GL.Uniform1(6, slot);
+            s.UploadInt("uTexture", slot);
 
             GL.BindVertexArray(vao);
             GL.DrawElements(BeginMode.Triangles, triangles.Length, DrawElementsType.UnsignedInt, 0);

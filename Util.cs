@@ -4,6 +4,7 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -58,5 +59,12 @@ namespace Minecraft
             => new Vector2(((float)x / Width) * 2f - 1f, ((float)y / Height) * 2f - 1f);
         public static Vector2 PixelToGL(Vector2i pos)
             => PixelToGL(pos.X, pos.Y);
+
+        /*[DllImport("user32.dll")]
+        public static extern int ToUnicode(uint virtualKeyCode, uint scanCode,
+            byte[] keyboardState,
+            [Out, MarshalAs(UnmanagedType.LPWStr, SizeConst = 64)]
+            StringBuilder receivingBuffer,
+            int bufferSize, uint flags);*/
     }
 }

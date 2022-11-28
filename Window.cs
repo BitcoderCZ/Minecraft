@@ -127,10 +127,9 @@ namespace Minecraft
                     Player.Rotation.X = 89;
             }
 
+            GUI.Update(delta);
             Player.Update(keyboardState, delta);
-
             DragAndDropHandler.Update();
-
             World.Update(delta);
 
             float FPS = 1f / delta;
@@ -180,6 +179,10 @@ namespace Minecraft
             worldGenThread.Start();
         }
 
+        protected override void OnKeyPress(KeyPressEventArgs e)
+        {
+            GUI.OnKeyPress(e.KeyChar);
+        }
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;

@@ -52,6 +52,7 @@ namespace Minecraft.Graphics.UI
         public virtual void Update(float delta) { }
         public virtual void OnMouseDown(MouseButton button, bool onElement) { }
         public virtual void OnMouseUp(MouseButton button, bool onElement) { }
+        public virtual void OnKeyPress(char keyChar) { }
         public virtual void OnKeyDown(Key key, KeyModifiers modifiers) { }
         public virtual void OnKeyUp(Key key, KeyModifiers modifiers) { }
 

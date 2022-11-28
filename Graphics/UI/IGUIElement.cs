@@ -16,6 +16,7 @@ namespace Minecraft.Graphics.UI
 
         void OnMouseDown(MouseButton button, bool onElement);
         void OnMouseUp(MouseButton button, bool onElement);
+        void OnKeyPress(char keyChar);
         void OnKeyDown(Key key, KeyModifiers modifiers);
         void OnKeyUp(Key key, KeyModifiers modifiers);
     }

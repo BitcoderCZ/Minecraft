@@ -29,10 +29,13 @@ namespace Minecraft.Graphics
             GL.CompileShader(vertex);
 
             GL.GetShader(vertex, ShaderParameter.CompileStatus, out int status);
-            
+
+            bool failed = false;
+
             if (status == 0) {
                 string err = GL.GetShaderInfoLog(vertex);
                 Console.WriteLine($"ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{ err}");
+                failed = true;
             }
 
             int fragment = GL.CreateShader(ShaderType.FragmentShader);
@@ -44,6 +47,7 @@ namespace Minecraft.Graphics
             if (status == 0) {
                 string err = GL.GetShaderInfoLog(vertex);
                 Console.WriteLine($"ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{err}");
+                failed = true;
             }
 
             ProgramId = GL.CreateProgram();
@@ -55,6 +59,14 @@ namespace Minecraft.Graphics
             if (status == 0) {
                 string err = GL.GetProgramInfoLog(vertex);
                 Console.WriteLine($"ERROR::SHADER::PROGRAM::LINKING_FAILED\n{err}");
+                failed = true;
+            }
+
+            if (failed) {
+                Program.Window.Running = failed;
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(true);
+                Environment.Exit(3);
             }
 
             GL.DeleteShader(vertex);

@@ -1,11 +1,11 @@
-#version 460 core
+#version 450 core
 
 out vec4 FragColor;
 
 in vec3 fUv;
 in vec4 fCol;
 
-layout (location = 5, binding = 1) uniform sampler2DArray textures;
+layout (binding = 1) uniform sampler2DArray textures;
 
 layout (location = 6) uniform float globalLight;
 layout (location = 7) uniform float minGlobalLightLevel;

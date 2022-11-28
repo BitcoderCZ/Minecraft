@@ -71,7 +71,7 @@ namespace Minecraft.Graphics
             int slot = 0;
             GL.ActiveTexture(TextureUnit.Texture0 + slot);
             GL.BindTexture(TextureTarget.Texture2D, textureID);
-            GL.Uniform1(5, slot);
+            s.UploadInt("uTexture", slot);
 
             GL.BindVertexArray(vao);
             GL.DrawElements(BeginMode.Triangles, triangles.Length, DrawElementsType.UnsignedInt, 0);
