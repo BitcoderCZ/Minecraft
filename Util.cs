@@ -17,6 +17,10 @@ namespace Minecraft
         public static float Width = 1280f;
         public static float Height = 720f;
 
+        public static readonly int ProcessorCount = Environment.ProcessorCount;
+        public static readonly ParallelOptions DefaultParallelOptions =
+            new ParallelOptions() { MaxDegreeOfParallelism = ProcessorCount };
+
         public static void CreateCube(float scale, out TexVertex[] verts, out uint[] tris)
         {
             verts = new TexVertex[6 * 4];

@@ -61,10 +61,10 @@ namespace Minecraft.Graphics
                 projMatrix = Matrix4.CreateOrthographicOffCenter(left, right, bottom, top, near, far);
             } else {
                 float fov = 45f;
-                float near = 0.0001f;
-                float far = 10000f;
+                float near = 0.1f;
+                float far = 1000f;
                 float aspect = width / height;
-                 projMatrix = Matrix4.CreatePerspectiveFieldOfView(DegToRad(fov), aspect, near, far);
+                projMatrix = Matrix4.CreatePerspectiveFieldOfView(DegToRad(fov), aspect, near, far);
             }
         }
 

@@ -127,6 +127,25 @@ namespace Minecraft
                     Player.Rotation.X = 89;
             }
 
+            if (Focused && !mouseLocked) {
+                if (keyboardState.IsKeyDown(Key.Up))
+                    System.Windows.Forms.Cursor.Position = 
+                        new Point(System.Windows.Forms.Cursor.Position.X, 
+                        System.Windows.Forms.Cursor.Position.Y - 4);
+                else if (keyboardState.IsKeyDown(Key.Down))
+                    System.Windows.Forms.Cursor.Position =
+                        new Point(System.Windows.Forms.Cursor.Position.X,
+                        System.Windows.Forms.Cursor.Position.Y + 4);
+                if (keyboardState.IsKeyDown(Key.Left))
+                    System.Windows.Forms.Cursor.Position =
+                        new Point(System.Windows.Forms.Cursor.Position.X - 4,
+                        System.Windows.Forms.Cursor.Position.Y);
+                else if (keyboardState.IsKeyDown(Key.Right))
+                    System.Windows.Forms.Cursor.Position =
+                        new Point(System.Windows.Forms.Cursor.Position.X + 4,
+                        System.Windows.Forms.Cursor.Position.Y);
+            }
+
             GUI.Update(delta);
             Player.Update(keyboardState, delta);
             DragAndDropHandler.Update();
@@ -194,11 +213,29 @@ namespace Minecraft
             GUI.OnKeyDown(e.Key, e.Modifiers);
             Player.OnKeyDown(e.Key, e.Modifiers);
             DragAndDropHandler.OnKeyDown(e.Key);
+
+            if (Focused) {
+                if (e.Key == Key.Z || e.Key == Key.Keypad1)
+                    OnMouseDown(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Left, true));
+                else if (e.Key == Key.X || e.Key == Key.Keypad2)
+                    OnMouseDown(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Middle, true));
+                else if (e.Key == Key.C || e.Key == Key.Keypad3)
+                    OnMouseDown(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Right, true));
+            }
         }
         protected override void OnKeyUp(KeyboardKeyEventArgs e)
         {
             keyboardState = e.Keyboard;
             GUI.OnKeyUp(e.Key, e.Modifiers);
+
+            if (Focused) {
+                if (e.Key == Key.Z || e.Key == Key.Keypad1)
+                    OnMouseUp(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Left, false));
+                else if (e.Key == Key.X || e.Key == Key.Keypad2)
+                    OnMouseUp(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Middle, false));
+                else if (e.Key == Key.C || e.Key == Key.Keypad3)
+                    OnMouseUp(new MouseButtonEventArgs((int)mousePos.X, (int)mousePos.Y, MouseButton.Right, false));
+            }
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -212,7 +249,7 @@ namespace Minecraft
                 Player.OnMouseDown(e.Button);
 
             GUI.OnMouseDown(e.Button, e.Position);
-            DragAndDropHandler.OnMouseDown(e.Button, (Vector2i)e.Position);
+            DragAndDropHandler.OnMouseDown(e.Button, e.Position);
         }
 
         protected override void OnMouseUp(MouseButtonEventArgs e)

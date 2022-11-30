@@ -7,7 +7,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -15,9 +14,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using SystemPlus;
 
-namespace Minecraft
+namespace Minecraft.Managers
 {
     public static class World
     {
@@ -74,9 +72,6 @@ namespace Minecraft
 
         private static Thread createChunksThread;
         private static Thread applyModificationsThread;
-        private static TaskFactory factory;
-
-        private static object chunksToCreateLock = new object();
 
         public static bool Generated { get; private set; }
 
@@ -110,7 +105,7 @@ namespace Minecraft
         {
             Generated = false;
             Random r = new Random(DateTime.Now.Second * DateTime.Now.Millisecond / DateTime.Now.Hour);
-            spawnPos = new Vector3(BlockData.WorldSizeInBlocks / 2f, BlockData.ChunkHeight + 2f, BlockData.WorldSizeInBlocks / 2f);
+            spawnPos = new Vector3(BlockData.WorldCenter, BlockData.ChunkHeight + 2f, BlockData.WorldCenter);
 
             LoadSettings();
 
@@ -123,25 +118,11 @@ namespace Minecraft
                 Noise.SetSeed(seed);
             }
 
-            if (Settings.MultiThreading) {
-                int c = Util.ProcessorCount - 2;
+            createChunksThread = new Thread(new ThreadStart(CreateChunks));
+            createChunksThread.Start();
 
-                for (int i = 0; i < System.Math.Max(c, 1); i++) {
-                    Thread t = new Thread(CreateChunks);
-                    t.IsBackground = false;
-                    t.Start();
-                }
-            }
-            else {
-                createChunksThread = new Thread(CreateChunks);
-                createChunksThread.Start();
-            }
-
-            applyModificationsThread = new Thread(ApplyModifications);
+            applyModificationsThread = new Thread(new ThreadStart(ApplyModifications));
             applyModificationsThread.Start();
-
-            if (Settings.MultiThreading)
-                factory = new TaskFactory();
         }
 
         public static void Update(float delta)
@@ -172,13 +153,8 @@ namespace Minecraft
 
         private static void CreateChunk()
         {
-            Flat2i pos;
-            lock (chunksToCreateLock) {
-                if (chunksToCreate.Count == 0)
-                    return;
-                pos = chunksToCreate[0];
-                chunksToCreate.RemoveAt(0);
-            }
+            Flat2i pos = chunksToCreate[0];
+            chunksToCreate.RemoveAt(0);
             if (!activeChunks.Contains(pos))
                 activeChunks.Add(pos);
             chunks[pos.X, pos.Z].Init();
@@ -238,15 +214,8 @@ namespace Minecraft
         private static void CreateChunks()
         {
             while (Program.Window.Running) {
-                /*if (Settings.MultiThreading) {
-                    Parallel.For(0, System.Math.Min(chunksToCreate.Count, 2), (int i) =>
-                    {
-                        CreateChunk();
-                    });
-                } else {*/
-                    if (chunksToCreate.Count > 0)
-                        CreateChunk();
-                //}
+                if (chunksToCreate.Count > 0)
+                    CreateChunk();
 
                 Thread.Sleep(0);
             }
@@ -268,40 +237,17 @@ namespace Minecraft
             float smallStep = (1f / 2f) * smallMax;
             float smallLength = 0f;
 
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
+            for (int x = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; x <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; x++)
+                for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
+                    if (IsChunkInWorld(x, z)) {
+                        Flat2i pos = new Flat2i(x, z);
+                        chunks[x, z] = new Chunk(pos, true);
+                        activeChunks.Add(pos);
 
-            if (Settings.MultiThreadedLoading) {
-                Parallel.For(BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance, BlockData.WorldSizeInChunks / 2 + 
-                    Settings.RenderDistance + 1, Util.DefaultParallelOptions, (int x) =>
-                {
-                    for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
-                        if (IsChunkInWorld(x, z)) {
-                            Flat2i pos = new Flat2i(x, z);
-                            chunks[x, z] = new Chunk(pos, true);
-                            activeChunks.Add(pos);
-
-                            length += step;
-                            loadBar.PixWidth = (int)length;
-                        }
+                        length += step;
+                        loadBar.PixWidth = (int)length;
                     }
-                });
-            }
-            else {
-                for (int x = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; x <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; x++)
-                    for (int z = BlockData.WorldSizeInChunks / 2 - Settings.RenderDistance; z <= BlockData.WorldSizeInChunks / 2 + Settings.RenderDistance; z++) {
-                        if (IsChunkInWorld(x, z)) {
-                            Flat2i pos = new Flat2i(x, z);
-                            chunks[x, z] = new Chunk(pos, true);
-                            activeChunks.Add(pos);
-
-                            length += step;
-                            loadBar.PixWidth = (int)length;
-                        }
-                    }
-            }
-
-            watch.Stop();
+                }
 
             smallLength += smallStep;
             smallLoadBar.PixWidth = (int)smallLength;
@@ -343,7 +289,7 @@ namespace Minecraft
             Player.Position.Y = TerrainHeightAt(new Vector2(Player.Position.X, Player.Position.Z)) + 2.5f;
             prevPlayerChunk = BlockToChunk(Player.Position);
 
-            Console.WriteLine($"WORLD:GENERATE:DONE Time: {MathPlus.Round(watch.Elapsed.TotalSeconds, 2)}s");
+            Console.WriteLine("WORLD:GENERATE:DONE");
 
             Generated = true;
 

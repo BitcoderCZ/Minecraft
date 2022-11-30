@@ -127,6 +127,8 @@ namespace Minecraft.Graphics.UI
                     new UISlider(0.05f, 0.05f, 0.4f, 0.15f, 2f, font, 0.1f, 10f, 1f, 1), // 6
                     new UItext("Animated Chunks:", -0.45f, -0.1f, 2f, font),
                     new UICheckBox(0.05f, -0.15f, 0.15f, true), // 8
+                    new UItext("MultiThreading:", -0.40f, -0.3f, 2f, font),
+                    new UICheckBox(0.05f, -0.35f, 0.15f, true), // 10
                     new UISliceButton("Cancel", -0.45f, -0.8f, 3f, font, Textures["Button"], 2, (MouseButton btn) => {
                         if (btn == MouseButton.Left)
                             SetScene(4);
@@ -137,6 +139,7 @@ namespace Minecraft.Graphics.UI
                         World.Settings.RenderDistance = MathPlus.RoundToInt((Scenes[5][4] as UISlider).Value);
                         World.Settings.MouseSensitivity = MathPlus.Round((Scenes[5][6] as UISlider).Value, 1);
                         World.Settings.AnimatedChunks = (Scenes[5][8] as UICheckBox).Checked;
+                        World.Settings.MultiThreading = (Scenes[5][10] as UICheckBox).Checked;
                         World.SaveSettings();
                             SetScene(4);
                     }),
@@ -196,6 +199,7 @@ namespace Minecraft.Graphics.UI
                     (Scenes[5][4] as UISlider).Value = World.Settings.RenderDistance;
                     (Scenes[5][6] as UISlider).Value = World.Settings.MouseSensitivity;
                     (Scenes[5][8] as UICheckBox).Checked = World.Settings.AnimatedChunks;
+                    (Scenes[5][10] as UICheckBox).Checked = World.Settings.MultiThreading;
                     SetScene(5); // Settings
                 }
             };
@@ -317,10 +321,13 @@ namespace Minecraft.Graphics.UI
         {
             float x = (float)pos.X / Program.Window.Width * 2f - 1f;
             float y = ((float)pos.Y / Program.Window.Height * 2f - 1) * -1f;
+            int _scene = Scene;
             for (int i = 0; i < elements.Count; i++) {
                 elements[i].OnMouseDown(button,
                     x >= elements[i].Position.X && x < elements[i].Width + elements[i].Position.X &&
                     y >= elements[i].Position.Y && y < elements[i].Height + elements[i].Position.Y);
+                if (_scene != Scene)
+                    break;
             }
         }
         public static void OnMouseUp(MouseButton button, Point pos)
