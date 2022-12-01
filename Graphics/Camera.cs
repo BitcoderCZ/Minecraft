@@ -55,7 +55,7 @@ namespace Minecraft.Graphics
                 float right = projWidth / 2f;
                 float bottom = -projHeight / 2f;
                 float top = projHeight / 2f;
-                float near = 0.1f;
+                float near = 0.01f;
                 float far = 100f;
 
                 projMatrix = Matrix4.CreateOrthographicOffCenter(left, right, bottom, top, near, far);

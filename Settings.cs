@@ -11,6 +11,8 @@ namespace Minecraft
     {
         // Performance
         public int RenderDistance { get; set; }
+        public bool MultiThreading { get; set; }
+        public bool MultiThreadedLoading { get; set; }
         // Accesibility
         public float GUIScale { get; set; }
         // Controls
@@ -24,6 +26,8 @@ namespace Minecraft
         public Settings()
         {
             RenderDistance = 3;
+            MultiThreading = false;
+            MultiThreadedLoading = true;
             GUIScale = 2.5f;
             MouseSensitivity = 1f;
             Seed = -1;
